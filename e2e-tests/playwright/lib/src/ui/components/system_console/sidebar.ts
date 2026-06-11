@@ -179,6 +179,7 @@ class UserManagementCategory extends SidebarCategory {
 
 class SystemAttributesCategory extends SidebarCategory {
     readonly userAttributes: SidebarSection;
+    readonly sessionAttributes: SidebarSection;
     readonly attributeBasedAccess: SidebarSection;
     readonly membershipPolicies: SidebarSection;
     readonly permissionPolicies: SidebarSection;
@@ -186,6 +187,7 @@ class SystemAttributesCategory extends SidebarCategory {
     constructor(container: Locator) {
         super(container);
         this.userAttributes = this.section('User Attributes');
+        this.sessionAttributes = this.section('Session Attributes');
         this.attributeBasedAccess = this.section('Attribute-Based Access');
         this.membershipPolicies = this.section('Membership Policies');
         this.permissionPolicies = this.section('Permission Policies');
