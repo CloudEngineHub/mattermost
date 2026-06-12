@@ -10,8 +10,6 @@ import type {DeepPartial} from '@mattermost/types/utilities';
 
 import {Client4} from 'mattermost-redux/client';
 
-import {confirmNavigation} from 'actions/admin_actions';
-
 import {renderWithContext, userEvent} from 'tests/react_testing_utils';
 import {TestHelper} from 'utils/test_helper';
 
@@ -261,7 +259,7 @@ describe('SessionAttributesPage', () => {
         });
     });
 
-    it('reverts a staged edit when Cancel is confirmed', async () => {
+    it('reverts a staged edit and clears the nav guard when footer Cancel is clicked', async () => {
         getPropertyFields.mockResolvedValueOnce(representativeFields).mockResolvedValue([]);
 
         const {store} = renderWithContext(<SessionAttributesPage disabled={false}/>, getBaseState());
@@ -276,14 +274,24 @@ describe('SessionAttributesPage', () => {
         expect(within(stagedRow).getByTestId('session-attribute-ttl')).toHaveTextContent('1h');
         expect(screen.getByRole('button', {name: /Save/})).toBeEnabled();
 
-        // Cancel defers navigation while dirty; the discard-changes confirm invokes the stored revert callback.
+        await waitFor(() => {
+            expect(store.getState().views.admin.navigationBlock.blocked).toBe(true);
+        });
+
+        // Footer Cancel must revert in place — no discard modal, no deferred navigation.
         await userEvent.click(screen.getByRole('button', {name: /Cancel/}));
-        store.dispatch(confirmNavigation());
 
         await waitFor(() => {
             const revertedRow = screen.getAllByText('Client IP')[0].closest('tr') as HTMLElement;
             expect(within(revertedRow).getByTestId('session-attribute-ttl')).toHaveTextContent('5m');
         });
+
+        // Dirty state cleared, save bar disabled, and the navigation guard released —
+        // without ever needing to confirm a deferred navigation.
         expect(screen.getByRole('button', {name: /Save/})).toBeDisabled();
+        await waitFor(() => {
+            expect(store.getState().views.admin.navigationBlock.blocked).toBe(false);
+        });
+        expect(store.getState().views.admin.navigationBlock.showNavigationPrompt).toBe(false);
     });
 });
