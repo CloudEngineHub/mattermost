@@ -54,11 +54,44 @@ export async function setupSessionAttributesTest(pw: PlaywrightExtended): Promis
 
     test.skip(fields.length === 0, 'No seeded session attributes returned by the server');
 
+    captureSessionAttributesBaseline(adminClient, fields);
+
     const {systemConsolePage} = await pw.testBrowser.login(adminUser);
     await systemConsolePage.goto();
     await systemConsolePage.toBeVisible();
 
     return {adminClient, systemConsolePage, fields};
+}
+
+/**
+ * Baseline snapshot of every seeded session attribute, captured the first time
+ * the suite sets up (before any test mutates state). Used by
+ * restoreSessionAttributesToBaseline so the suite is order-independent: each
+ * test returns the fields to this original state, so a field enabled by one
+ * test cannot leak into another's assertions.
+ */
+let baselineFields: PropertyField[] | null = null;
+let baselineClient: Client4 | null = null;
+
+function captureSessionAttributesBaseline(client: Client4, fields: PropertyField[]): void {
+    if (!baselineFields) {
+        baselineFields = fields.map((field) => ({...field}));
+        baselineClient = client;
+    }
+}
+
+/**
+ * Restore every seeded session attribute to the baseline captured at suite
+ * start. Call from afterEach so tests that toggle enabled/ttl/grace cannot leak
+ * state into later tests, regardless of execution order.
+ */
+export async function restoreSessionAttributesToBaseline(): Promise<void> {
+    if (!baselineClient || !baselineFields) {
+        return;
+    }
+    for (const field of baselineFields) {
+        await restoreSessionAttribute(baselineClient, field);
+    }
 }
 
 export async function getSessionAttributeFields(client: Client4): Promise<PropertyField[]> {
