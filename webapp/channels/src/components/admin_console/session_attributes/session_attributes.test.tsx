@@ -28,6 +28,10 @@ type ExtraAttrs = {
     grace_period_seconds?: number;
 };
 
+// The server keys every field under a real group UUID that differs from the
+// group name; fixtures must mirror that so the resolve-by-name path is exercised.
+const SESSION_GROUP_UUID = 'nkpkzni6yjrjt8uktpbwkagoth';
+
 function makeField(name: string, type: 'text' | 'select', sortOrder: number, extra: ExtraAttrs = {}): UserPropertyField {
     const {options, ...tunables} = extra;
 
@@ -35,7 +39,7 @@ function makeField(name: string, type: 'text' | 'select', sortOrder: number, ext
         id: `session-${name}`,
         name,
         type,
-        group_id: SESSION_ATTRIBUTES_GROUP_ID,
+        group_id: SESSION_GROUP_UUID,
         create_at: 1736541716295,
         update_at: 0,
         delete_at: 0,
@@ -146,6 +150,17 @@ describe('SessionAttributesPage', () => {
         expect(statuses).toContain('Disabled');
 
         expect(screen.getAllByTestId('session-attribute-platforms').length).toBe(representativeFields.length);
+    });
+
+    it('renders rows when fields resolve under a real group UUID distinct from the group name', async () => {
+        expect(SESSION_GROUP_UUID).not.toEqual(SESSION_ATTRIBUTES_GROUP_ID);
+        getPropertyFields.mockResolvedValueOnce(representativeFields).mockResolvedValue([]);
+
+        renderWithContext(<SessionAttributesPage disabled={false}/>, getBaseState());
+
+        expect(await screen.findByText('Client IP')).toBeInTheDocument();
+        expect(screen.getAllByTestId('session-attribute-status')).toHaveLength(representativeFields.length);
+        expect(screen.queryByText('No session attributes found.')).not.toBeInTheDocument();
     });
 
     it('shows the empty state when there are no fields', async () => {

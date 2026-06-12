@@ -4,20 +4,24 @@
 import React from 'react';
 
 import type {UserPropertyField} from '@mattermost/types/properties';
-import {SESSION_ATTRIBUTES_GROUP_ID} from '@mattermost/types/properties';
 
 import {renderWithContext, screen, fireEvent} from 'tests/react_testing_utils';
 
 import AttributeSelectorMenu from './attribute_selector_menu';
 
+// Real groups carry UUIDs distinct from their names, and session attributes are
+// identified by their `session` object type rather than the group id.
+const CPA_GROUP_UUID = 'cpa9q4w7m2x5c8v1b6n3k0jr5h';
+const SESSION_GROUP_UUID = 'nkpkzni6yjrjt8uktpbwkagoth';
+
 const userField: UserPropertyField = {
     id: 'f1',
     name: 'department',
     type: 'text',
-    group_id: 'custom_profile_attributes',
+    group_id: CPA_GROUP_UUID,
     target_id: '',
     target_type: '',
-    object_type: '',
+    object_type: 'user',
     attrs: {
         sort_order: 0,
         visibility: 'always',
@@ -36,10 +40,10 @@ const sessionField = {
     id: 'f2',
     name: 'ip_address',
     type: 'text',
-    group_id: SESSION_ATTRIBUTES_GROUP_ID,
+    group_id: SESSION_GROUP_UUID,
     target_id: '',
-    target_type: '',
-    object_type: '',
+    target_type: 'system',
+    object_type: 'session',
     attrs: {
         sort_order: 0,
         visibility: 'always',

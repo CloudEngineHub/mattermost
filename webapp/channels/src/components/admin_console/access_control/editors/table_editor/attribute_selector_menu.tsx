@@ -24,7 +24,7 @@ import {
 import type IconProps from '@mattermost/compass-icons/components/props';
 import {WithTooltip} from '@mattermost/shared/components/tooltip';
 import type {UserPropertyField} from '@mattermost/types/properties';
-import {SESSION_ATTRIBUTES_GROUP_ID} from '@mattermost/types/properties';
+import {isSessionAttributeField} from '@mattermost/types/properties';
 
 import * as Menu from 'components/menu';
 
@@ -114,7 +114,7 @@ const AttributeSelectorMenu = ({currentAttribute, availableAttributes, disabled,
         const user: UserPropertyField[] = [];
         const session: UserPropertyField[] = [];
         for (const attr of options) {
-            if (attr.group_id === SESSION_ATTRIBUTES_GROUP_ID) {
+            if (isSessionAttributeField(attr)) {
                 session.push(attr);
             } else {
                 user.push(attr);
@@ -157,7 +157,7 @@ const AttributeSelectorMenu = ({currentAttribute, availableAttributes, disabled,
         // hasSpaces checks the CEL identifier (name), not the display label.
         // New fields cannot have spaces in name but leaving this check for backwards compatibility with grandfathered legacy fields.
         const hasSpaces = name.includes(' ');
-        const isSessionAttribute = option.group_id === SESSION_ATTRIBUTES_GROUP_ID;
+        const isSessionAttribute = isSessionAttributeField(option);
         const isSynced = option.attrs?.ldap || option.attrs?.saml;
         const isAdminManaged = option.attrs?.managed === 'admin';
         const isProtected = option.attrs?.protected;

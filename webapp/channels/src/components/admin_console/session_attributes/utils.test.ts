@@ -1,7 +1,6 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import {SESSION_ATTRIBUTES_GROUP_ID} from '@mattermost/types/properties';
 import type {PropertyFieldOption} from '@mattermost/types/properties';
 
 import type {SessionAttributeField} from './utils';
@@ -19,7 +18,7 @@ function makeField(overrides: Partial<SessionAttributeField> = {}): SessionAttri
         id: 'field-id',
         name: 'attribute',
         type: 'text',
-        group_id: SESSION_ATTRIBUTES_GROUP_ID,
+        group_id: 'nkpkzni6yjrjt8uktpbwkagoth',
         create_at: 1736541716295,
         update_at: 0,
         delete_at: 0,

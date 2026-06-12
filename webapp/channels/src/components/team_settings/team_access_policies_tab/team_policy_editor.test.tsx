@@ -5,7 +5,6 @@ import React from 'react';
 import type {ComponentProps} from 'react';
 
 import type {ChannelWithTeamData} from '@mattermost/types/channels';
-import {SESSION_ATTRIBUTES_GROUP_ID} from '@mattermost/types/properties';
 
 import TableEditor from 'components/admin_console/access_control/editors/table_editor/table_editor';
 
@@ -241,8 +240,8 @@ describe('TeamPolicyEditor', () => {
         MockedTableEditor.mockClear();
         mockGetAccessControlFields.mockResolvedValue({
             data: [
-                {id: 'u1', name: 'department', group_id: 'custom_profile_attributes', attrs: {managed: 'admin'}},
-                {id: 's1', name: 'network_name', group_id: SESSION_ATTRIBUTES_GROUP_ID, attrs: {}},
+                {id: 'u1', name: 'department', group_id: 'cpa9q4w7m2x5c8v1b6n3k0jr5h', object_type: 'user', attrs: {managed: 'admin'}},
+                {id: 's1', name: 'network_name', group_id: 'nkpkzni6yjrjt8uktpbwkagoth', object_type: 'session', target_type: 'system', attrs: {}},
             ],
         });
 

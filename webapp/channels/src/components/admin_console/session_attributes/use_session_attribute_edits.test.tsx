@@ -18,7 +18,7 @@ function makeField(name: string, extra: Record<string, unknown> = {}): SessionAt
         id: `field-${name}`,
         name,
         type: 'text',
-        group_id: SESSION_ATTRIBUTES_GROUP_ID,
+        group_id: 'nkpkzni6yjrjt8uktpbwkagoth',
         create_at: 1736541716295,
         update_at: 0,
         delete_at: 0,

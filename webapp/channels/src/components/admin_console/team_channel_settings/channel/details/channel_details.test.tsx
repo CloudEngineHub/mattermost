@@ -5,7 +5,6 @@ import React from 'react';
 
 import type {Channel} from '@mattermost/types/channels';
 import type {Group} from '@mattermost/types/groups';
-import {SESSION_ATTRIBUTES_GROUP_ID} from '@mattermost/types/properties';
 import type {Scheme} from '@mattermost/types/schemes';
 
 import {renderWithContext, waitFor} from 'tests/react_testing_utils';
@@ -256,8 +255,8 @@ describe('admin_console/team_channel_settings/channel/ChannelDetails', () => {
 
         const getAccessControlFields = jest.fn().mockResolvedValue({
             data: [
-                {id: 'u1', name: 'department', group_id: 'custom_profile_attributes', attrs: {managed: 'admin'}},
-                {id: 's1', name: 'network_name', group_id: SESSION_ATTRIBUTES_GROUP_ID, attrs: {}},
+                {id: 'u1', name: 'department', group_id: 'cpa9q4w7m2x5c8v1b6n3k0jr5h', object_type: 'user', attrs: {managed: 'admin'}},
+                {id: 's1', name: 'network_name', group_id: 'nkpkzni6yjrjt8uktpbwkagoth', object_type: 'session', target_type: 'system', attrs: {}},
             ],
         });
 

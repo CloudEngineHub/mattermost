@@ -4,7 +4,6 @@
 import {within} from '@testing-library/react';
 import React from 'react';
 
-import {SESSION_ATTRIBUTES_GROUP_ID} from '@mattermost/types/properties';
 import type {UserPropertyField} from '@mattermost/types/properties';
 
 import {renderWithContext, screen} from 'tests/react_testing_utils';
@@ -29,7 +28,7 @@ function makeField(name: string, type: 'text' | 'select', extra: ExtraAttrs = {}
         id: `field-${name}`,
         name,
         type,
-        group_id: SESSION_ATTRIBUTES_GROUP_ID,
+        group_id: 'nkpkzni6yjrjt8uktpbwkagoth',
         create_at: 1736541716295,
         update_at: 0,
         delete_at: 0,

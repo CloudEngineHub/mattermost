@@ -4,7 +4,6 @@
 import React from 'react';
 
 import type {UserPropertyField} from '@mattermost/types/properties';
-import {SESSION_ATTRIBUTES_GROUP_ID} from '@mattermost/types/properties';
 
 import TableEditor from 'components/admin_console/access_control/editors/table_editor/table_editor';
 
@@ -2192,15 +2191,15 @@ describe('components/channel_settings_modal/ChannelSettingsAccessRulesTab', () =
             id: 'session1',
             name: 'network_name',
             type: 'text',
-            group_id: SESSION_ATTRIBUTES_GROUP_ID,
+            group_id: 'nkpkzni6yjrjt8uktpbwkagoth',
             create_at: 0,
             update_at: 0,
             delete_at: 0,
             created_by: '',
             updated_by: '',
             target_id: '',
-            target_type: '',
-            object_type: '',
+            target_type: 'system',
+            object_type: 'session',
             attrs: {
                 sort_order: 2,
                 visibility: 'when_set',

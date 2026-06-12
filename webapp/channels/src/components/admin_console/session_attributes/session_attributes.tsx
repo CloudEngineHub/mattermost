@@ -10,7 +10,7 @@ import {SESSION_ATTRIBUTES_GROUP_ID, SESSION_ATTRIBUTES_OBJECT_TYPE} from '@matt
 import type {GlobalState} from '@mattermost/types/store';
 
 import {fetchPropertyFields} from 'mattermost-redux/actions/properties';
-import {getPropertyFieldsForObjectTypeAndGroup} from 'mattermost-redux/selectors/entities/properties';
+import {getPropertyFieldsForObjectTypeAndGroup, getPropertyGroupByName} from 'mattermost-redux/selectors/entities/properties';
 
 import {setNavigationBlocked} from 'actions/admin_actions';
 
@@ -37,8 +37,12 @@ export default function SessionAttributesPage(props: Props) {
 
     const [loaded, setLoaded] = useState(false);
 
+    const groupId = useSelector((state: GlobalState) =>
+        getPropertyGroupByName(state, SESSION_ATTRIBUTES_GROUP_ID)?.id ?? '',
+    );
+
     const fields = useSelector((state: GlobalState) =>
-        getPropertyFieldsForObjectTypeAndGroup(state, SESSION_ATTRIBUTES_OBJECT_TYPE, SESSION_ATTRIBUTES_GROUP_ID),
+        getPropertyFieldsForObjectTypeAndGroup(state, SESSION_ATTRIBUTES_OBJECT_TYPE, groupId),
     ) as SessionAttributeField[];
 
     const edits = useSessionAttributeEdits(fields);

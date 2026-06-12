@@ -7,7 +7,7 @@ import {FormattedMessage} from 'react-intl';
 import {Button} from '@mattermost/shared/components/button';
 import {WithTooltip} from '@mattermost/shared/components/tooltip';
 import type {UserPropertyField} from '@mattermost/types/properties';
-import {SESSION_ATTRIBUTES_GROUP_ID} from '@mattermost/types/properties';
+import {isSessionAttributeField} from '@mattermost/types/properties';
 
 import Markdown from 'components/markdown';
 
@@ -127,7 +127,7 @@ export function hasUsableAttributes(
 // Session attributes are environmental and are rejected by the server for
 // membership rules, so strip them before they reach the editors.
 export function excludeSessionAttributes(fields: UserPropertyField[]): UserPropertyField[] {
-    return fields.filter((field) => field.group_id !== SESSION_ATTRIBUTES_GROUP_ID);
+    return fields.filter((field) => !isSessionAttributeField(field));
 }
 
 interface TestButtonProps {

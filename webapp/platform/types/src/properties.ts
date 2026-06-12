@@ -73,6 +73,16 @@ export type UserPropertyFieldGroupID = 'custom_profile_attributes' | 'session_at
 export const SESSION_ATTRIBUTES_GROUP_ID: UserPropertyFieldGroupID = 'session_attributes';
 export const SESSION_ATTRIBUTES_OBJECT_TYPE = 'session';
 
+/**
+ * Session attributes are the only property fields targeting the `session`
+ * object type, so identity is keyed off `object_type` rather than the group
+ * id. The server assigns each field a real group UUID, so comparing against
+ * the group NAME never matches live data.
+ */
+export function isSessionAttributeField(field: Pick<PropertyField, 'object_type'>): boolean {
+    return field.object_type === SESSION_ATTRIBUTES_OBJECT_TYPE;
+}
+
 export type UserPropertyValueType = 'phone' | 'url' | '';
 
 export type FieldVisibility = 'always' | 'hidden' | 'when_set';
@@ -90,7 +100,10 @@ export type PropertyFieldOption = {
 }
 
 export type UserPropertyField = PropertyField & {
-    group_id: UserPropertyFieldGroupID;
+
+    // The server assigns a real group UUID; the group name is only ever a
+    // client-side placeholder for an unsaved field.
+    group_id: string;
     attrs: {
         sort_order: number;
         visibility: FieldVisibility;

@@ -4,7 +4,6 @@
 import React from 'react';
 
 import type {UserPropertyField} from '@mattermost/types/properties';
-import {SESSION_ATTRIBUTES_GROUP_ID} from '@mattermost/types/properties';
 
 import {renderWithContext, screen} from 'tests/react_testing_utils';
 
@@ -432,14 +431,19 @@ describe('hasUsableAttributes', () => {
 });
 
 describe('excludeSessionAttributes', () => {
-    const makeField = (id: string, groupId: UserPropertyField['group_id']): UserPropertyField => ({
+    // Group ids are real UUIDs in production; session attributes are identified
+    // by their `session` object type, not by the group id matching a name.
+    const CPA_GROUP_UUID = 'cpa9q4w7m2x5c8v1b6n3k0jr5h';
+    const SESSION_GROUP_UUID = 'nkpkzni6yjrjt8uktpbwkagoth';
+
+    const makeField = (id: string, objectType: string): UserPropertyField => ({
         id,
         name: id,
         type: 'text',
-        group_id: groupId,
+        group_id: objectType === 'session' ? SESSION_GROUP_UUID : CPA_GROUP_UUID,
         target_id: '',
-        target_type: '',
-        object_type: '',
+        target_type: objectType === 'session' ? 'system' : '',
+        object_type: objectType,
         attrs: {
             sort_order: 0,
             visibility: 'always',
@@ -453,8 +457,8 @@ describe('excludeSessionAttributes', () => {
     });
 
     test('removes session-attribute fields and keeps user attributes', () => {
-        const userField = makeField('department', 'custom_profile_attributes');
-        const sessionField = makeField('ip_address', SESSION_ATTRIBUTES_GROUP_ID);
+        const userField = makeField('department', 'user');
+        const sessionField = makeField('ip_address', 'session');
 
         expect(excludeSessionAttributes([userField, sessionField])).toEqual([userField]);
     });
@@ -465,8 +469,8 @@ describe('excludeSessionAttributes', () => {
 
     test('returns the list unchanged when no session attributes are present', () => {
         const fields = [
-            makeField('department', 'custom_profile_attributes'),
-            makeField('location', 'custom_profile_attributes'),
+            makeField('department', 'user'),
+            makeField('location', 'user'),
         ];
 
         expect(excludeSessionAttributes(fields)).toEqual(fields);
@@ -474,8 +478,8 @@ describe('excludeSessionAttributes', () => {
 
     test('returns an empty array when every field is a session attribute', () => {
         const fields = [
-            makeField('ip_address', SESSION_ATTRIBUTES_GROUP_ID),
-            makeField('network_name', SESSION_ATTRIBUTES_GROUP_ID),
+            makeField('ip_address', 'session'),
+            makeField('network_name', 'session'),
         ];
 
         expect(excludeSessionAttributes(fields)).toEqual([]);

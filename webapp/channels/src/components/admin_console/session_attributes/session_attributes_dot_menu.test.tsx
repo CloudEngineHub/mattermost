@@ -3,7 +3,6 @@
 
 import React from 'react';
 
-import {SESSION_ATTRIBUTES_GROUP_ID} from '@mattermost/types/properties';
 import type {UserPropertyField} from '@mattermost/types/properties';
 
 import ModalController from 'components/modal_controller';
@@ -25,7 +24,7 @@ function makeField(name: string, extra: ExtraAttrs = {}): SessionAttributeField 
         id: `field-${name}`,
         name,
         type: 'text',
-        group_id: SESSION_ATTRIBUTES_GROUP_ID,
+        group_id: 'nkpkzni6yjrjt8uktpbwkagoth',
         create_at: 1736541716295,
         update_at: 0,
         delete_at: 0,
