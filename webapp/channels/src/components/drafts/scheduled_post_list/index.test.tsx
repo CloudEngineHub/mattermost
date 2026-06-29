@@ -18,11 +18,11 @@ jest.mock('mattermost-redux/actions/channels', () => ({
 }));
 
 jest.mock('components/drafts/draft_row', () => {
-    return function MockDraftRow(props: {item: ScheduledPost; scrollIntoView?: boolean}) {
+    return function MockDraftRow(props: {item: ScheduledPost; highlight?: boolean}) {
         return (
             <div
                 data-testid='scheduled-post-row'
-                data-scroll-into-view={props.scrollIntoView ? 'true' : 'false'}
+                data-highlight={props.highlight ? 'true' : 'false'}
             >
                 {props.item.message}
             </div>
@@ -138,9 +138,9 @@ describe('components/drafts/scheduled_post_list', () => {
 
         renderList(posts, [], `?target_id=${targetChannelId}`);
 
-        // The target row is rendered (the list scrolled to it) and flagged to scroll into view.
+        // The target row is rendered (the list scrolled to it) and highlighted.
         const targetRow = screen.getByText('Target scheduled message');
-        expect(targetRow.closest('[data-testid="scheduled-post-row"]')).toHaveAttribute('data-scroll-into-view', 'true');
+        expect(targetRow.closest('[data-testid="scheduled-post-row"]')).toHaveAttribute('data-highlight', 'true');
 
         // Virtualization: the rows at the very top of the list are not rendered
         // because the list scrolled down to the target.
@@ -151,7 +151,7 @@ describe('components/drafts/scheduled_post_list', () => {
         expect(screen.getAllByTestId('scheduled-post-row').length).toBeLessThan(posts.length);
     });
 
-    test('keeps the target post flagged to scroll into view across re-renders', () => {
+    test('keeps the target post highlighted across re-renders', () => {
         const targetChannelId = 'target_channel';
         const initialPosts = [
             makeScheduledPost('a', 'Post A', 'channel1'),
@@ -162,10 +162,10 @@ describe('components/drafts/scheduled_post_list', () => {
         const {rerender} = renderList(initialPosts, [], `?target_id=${targetChannelId}`);
 
         const getTargetRow = () => screen.getByText('Sticky target post').closest('[data-testid="scheduled-post-row"]');
-        expect(getTargetRow()).toHaveAttribute('data-scroll-into-view', 'true');
+        expect(getTargetRow()).toHaveAttribute('data-highlight', 'true');
 
-        // Re-render with an extra post. The remembered target id now flows
-        // through itemData, so the same post stays flagged via the sticky branch.
+        // Re-render with an extra post. The resolved target id still points at
+        // the same post, so it stays highlighted.
         rerender(
             <ScheduledPostList
                 scheduledPosts={[...initialPosts, makeScheduledPost('c', 'Post C', 'channel1')]}
@@ -175,7 +175,7 @@ describe('components/drafts/scheduled_post_list', () => {
             />,
         );
 
-        expect(getTargetRow()).toHaveAttribute('data-scroll-into-view', 'true');
+        expect(getTargetRow()).toHaveAttribute('data-highlight', 'true');
     });
 
     test('scrolls to a target_id that matches a thread root_id', () => {
@@ -190,7 +190,7 @@ describe('components/drafts/scheduled_post_list', () => {
         renderList(posts, [], `?target_id=${targetRootId}`);
 
         const targetRow = screen.getByText('Target thread reply');
-        expect(targetRow.closest('[data-testid="scheduled-post-row"]')).toHaveAttribute('data-scroll-into-view', 'true');
+        expect(targetRow.closest('[data-testid="scheduled-post-row"]')).toHaveAttribute('data-highlight', 'true');
         expect(screen.queryByText('Scheduled message 0')).not.toBeInTheDocument();
     });
 
@@ -207,8 +207,8 @@ describe('components/drafts/scheduled_post_list', () => {
         const erroredRow = screen.getByText('Errored target post').closest('[data-testid="scheduled-post-row"]');
         const validRow = screen.getByText('Valid target post').closest('[data-testid="scheduled-post-row"]');
 
-        expect(erroredRow).toHaveAttribute('data-scroll-into-view', 'false');
-        expect(validRow).toHaveAttribute('data-scroll-into-view', 'true');
+        expect(erroredRow).toHaveAttribute('data-highlight', 'false');
+        expect(validRow).toHaveAttribute('data-highlight', 'true');
     });
 
     test('stays at the top and scrolls to nothing when the target_id matches no post', () => {
@@ -222,8 +222,8 @@ describe('components/drafts/scheduled_post_list', () => {
         // With no matching target the list stays at the top.
         expect(screen.getByText('Scheduled message 0')).toBeInTheDocument();
 
-        // Nothing is flagged to scroll into view.
+        // Nothing is highlighted.
         const rows = screen.getAllByTestId('scheduled-post-row');
-        rows.forEach((row) => expect(row).toHaveAttribute('data-scroll-into-view', 'false'));
+        rows.forEach((row) => expect(row).toHaveAttribute('data-highlight', 'false'));
     });
 });
