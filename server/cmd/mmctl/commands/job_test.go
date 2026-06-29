@@ -232,15 +232,26 @@ func (s *MmctlUnitTestSuite) TestCreateJobCmdF() {
 		s.Equal(mockJob, printer.GetLines()[0].(*model.Job))
 	})
 
-	s.Run("create job with invalid type", func() {
+	s.Run("forwards type not in AllJobTypes to the server", func() {
+		// access_control_sync is creatable but absent from model.AllJobTypes,
+		// so the command must not validate against that list and instead let
+		// the server decide.
 		printer.Clean()
+		mockJob := &model.Job{Id: model.NewId(), Type: model.JobTypeAccessControlSync}
 
 		cmd := &cobra.Command{}
 		cmd.Flags().StringToString("data", nil, "")
 
-		err := createJobCmdF(s.client, cmd, []string{"not_a_real_job_type"})
-		s.Require().NotNil(err)
-		s.Empty(printer.GetLines())
+		s.client.
+			EXPECT().
+			CreateJob(context.TODO(), &model.Job{Type: model.JobTypeAccessControlSync, Data: map[string]string{}}).
+			Return(mockJob, &model.Response{}, nil).
+			Times(1)
+
+		err := createJobCmdF(s.client, cmd, []string{model.JobTypeAccessControlSync})
+		s.Require().Nil(err)
+		s.Len(printer.GetLines(), 1)
+		s.Empty(printer.GetErrorLines())
 	})
 
 	s.Run("create job returns server error", func() {
