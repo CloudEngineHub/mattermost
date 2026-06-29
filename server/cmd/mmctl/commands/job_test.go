@@ -215,7 +215,9 @@ func (s *MmctlUnitTestSuite) TestCreateJobCmdF() {
 		}
 
 		cmd := &cobra.Command{}
-		cmd.Flags().StringToString("data", data, "")
+		cmd.Flags().StringToString("data", nil, "")
+		err := cmd.Flags().Set("data", "batch_size=1000")
+		s.Require().NoError(err)
 
 		s.client.
 			EXPECT().
@@ -223,7 +225,7 @@ func (s *MmctlUnitTestSuite) TestCreateJobCmdF() {
 			Return(mockJob, &model.Response{}, nil).
 			Times(1)
 
-		err := createJobCmdF(s.client, cmd, []string{model.JobTypeMessageExport})
+		err = createJobCmdF(s.client, cmd, []string{model.JobTypeMessageExport})
 		s.Require().Nil(err)
 		s.Len(printer.GetLines(), 1)
 		s.Empty(printer.GetErrorLines())
