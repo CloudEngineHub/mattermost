@@ -318,17 +318,17 @@ func (_m *UserAccessTokenStore) Search(term string) ([]*model.UserAccessToken, e
 	return r0, r1
 }
 
-// UpdateLastNotifiedThreshold provides a mock function with given fields: tokenID, threshold
-func (_m *UserAccessTokenStore) UpdateLastNotifiedThreshold(tokenID string, threshold int) error {
-	ret := _m.Called(tokenID, threshold)
+// UpdateLastNotifiedAt provides a mock function with given fields: tokenID, notifiedAt
+func (_m *UserAccessTokenStore) UpdateLastNotifiedAt(tokenID string, notifiedAt int64) error {
+	ret := _m.Called(tokenID, notifiedAt)
 
 	if len(ret) == 0 {
-		panic("no return value specified for UpdateLastNotifiedThreshold")
+		panic("no return value specified for UpdateLastNotifiedAt")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, int) error); ok {
-		r0 = rf(tokenID, threshold)
+	if rf, ok := ret.Get(0).(func(string, int64) error); ok {
+		r0 = rf(tokenID, notifiedAt)
 	} else {
 		r0 = ret.Error(0)
 	}

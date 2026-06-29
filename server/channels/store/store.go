@@ -856,7 +856,7 @@ type UserAccessTokenStore interface {
 	Search(term string) ([]*model.UserAccessToken, error)
 	UpdateTokenEnable(tokenID string) error
 	UpdateTokenDisable(tokenID string) error
-	UpdateLastNotifiedThreshold(tokenID string, threshold int) error
+	UpdateLastNotifiedAt(tokenID string, notifiedAt int64) error
 }
 
 type PluginStore interface {

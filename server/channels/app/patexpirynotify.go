@@ -29,8 +29,8 @@ var patExpiryThresholds = []int{1, 3, 7}
 //
 // Bot tokens and tokens owned by deactivated users are excluded by the store
 // query. For each remaining token this computes the current warning bucket,
-// sends a single system-bot DM, and advances the per-token LastNotifiedThreshold
-// marker so the same (or a less urgent) warning is never re-sent. Because only
+// sends a single system-bot DM, and records the per-token LastNotifiedAt marker
+// so the same (or a less urgent) warning is never re-sent. Because only
 // the most urgent applicable bucket is ever sent, a token that first becomes
 // visible already inside the window (e.g. created with a short lifetime, or owned
 // by a just-reactivated user) gets a single warning rather than a catch-up burst
@@ -66,8 +66,10 @@ func (a *App) NotifyPersonalAccessTokensExpiring() error {
 		}
 
 		// Skip if the owner has already been warned at this bucket or a more
-		// urgent (smaller) one. nil means no warning has been sent yet.
-		if token.LastNotifiedThreshold != nil && *token.LastNotifiedThreshold <= bucket {
+		// urgent (smaller) one. A prior warning covers the current bucket when it
+		// was sent while no more time remained than the bucket spans, i.e.
+		// LastNotifiedAt >= ExpiresAt - bucket. nil means no warning sent yet.
+		if token.LastNotifiedAt != nil && *token.LastNotifiedAt >= token.ExpiresAt-int64(bucket)*model.DayInMilliseconds {
 			continue
 		}
 
@@ -80,8 +82,8 @@ func (a *App) NotifyPersonalAccessTokensExpiring() error {
 			continue
 		}
 
-		if err := a.Srv().Store().UserAccessToken().UpdateLastNotifiedThreshold(token.Id, bucket); err != nil {
-			rctx.Logger().Error("Failed to update LastNotifiedThreshold for personal access token",
+		if err := a.Srv().Store().UserAccessToken().UpdateLastNotifiedAt(token.Id, now); err != nil {
+			rctx.Logger().Error("Failed to update LastNotifiedAt for personal access token",
 				mlog.String("token_id", token.Id),
 				mlog.Err(err),
 			)
@@ -126,10 +128,20 @@ func (a *App) sendPATExpiryNotification(rctx request.CTX, systemBot *model.Bot, 
 		description = T("app.pat_expiry_notify.unnamed_token")
 	}
 
-	message := T("app.pat_expiry_notify.dm", map[string]any{
-		"Description": description,
-		"Days":        bucket,
-	})
+	// The cascade is 7/3/1; the multi-day message is only ever rendered with a
+	// plural day count (7 or 3), and the 1-day bucket uses a dedicated "24 hours"
+	// message, so neither string needs an awkward "day(s)" plural.
+	var message string
+	if bucket <= 1 {
+		message = T("app.pat_expiry_notify.dm_final", map[string]any{
+			"Description": description,
+		})
+	} else {
+		message = T("app.pat_expiry_notify.dm", map[string]any{
+			"Description": description,
+			"Days":        bucket,
+		})
+	}
 
 	post := &model.Post{
 		ChannelId: channel.Id,

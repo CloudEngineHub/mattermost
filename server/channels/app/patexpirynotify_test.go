@@ -44,20 +44,20 @@ func TestNotifyPersonalAccessTokensExpiring(t *testing.T) {
 		return th
 	}
 
-	systemBotDMPostCount := func(t *testing.T, th *TestHelper, userID string) int {
+	systemBotDMMessages := func(t *testing.T, th *TestHelper, userID string) []string {
 		systemBot, appErr := th.App.GetSystemBot(th.Context)
 		require.Nil(t, appErr)
 		channel, appErr := th.App.GetOrCreateDirectChannel(th.Context, userID, systemBot.UserId)
 		require.Nil(t, appErr)
 		posts, appErr := th.App.GetPosts(th.Context, channel.Id, 0, 50)
 		require.Nil(t, appErr)
-		count := 0
+		var messages []string
 		for _, p := range posts.Posts {
 			if p.UserId == systemBot.UserId {
-				count++
+				messages = append(messages, p.Message)
 			}
 		}
-		return count
+		return messages
 	}
 
 	t.Run("disabled when EnableUserAccessTokens is off", func(t *testing.T) {
@@ -69,7 +69,7 @@ func TestNotifyPersonalAccessTokensExpiring(t *testing.T) {
 		require.NoError(t, err)
 
 		require.NoError(t, th.App.NotifyPersonalAccessTokensExpiring())
-		require.Equal(t, 0, systemBotDMPostCount(t, th, th.BasicUser.Id))
+		require.Empty(t, systemBotDMMessages(t, th, th.BasicUser.Id))
 	})
 
 	t.Run("warns once and dedups on re-run", func(t *testing.T) {
@@ -80,16 +80,19 @@ func TestNotifyPersonalAccessTokensExpiring(t *testing.T) {
 		require.NoError(t, err)
 
 		require.NoError(t, th.App.NotifyPersonalAccessTokensExpiring())
-		require.Equal(t, 1, systemBotDMPostCount(t, th, th.BasicUser.Id), "owner should get exactly one warning")
+		messages := systemBotDMMessages(t, th, th.BasicUser.Id)
+		require.Len(t, messages, 1, "owner should get exactly one warning")
+		require.Contains(t, messages[0], "deploy bot", "warning should name the token")
+		require.Contains(t, messages[0], "7 days or less", "5-day token is in the 7-day bucket")
+		require.NotContains(t, messages[0], "day(s)", "message must not use the awkward day(s) plural")
 
 		stored, err := th.App.Srv().Store().UserAccessToken().Get(token.Id)
 		require.NoError(t, err)
-		require.NotNil(t, stored.LastNotifiedThreshold)
-		require.Equal(t, 7, *stored.LastNotifiedThreshold)
+		require.NotNil(t, stored.LastNotifiedAt, "last-notified time should be recorded")
 
 		// A second run in the same bucket must not send another DM.
 		require.NoError(t, th.App.NotifyPersonalAccessTokensExpiring())
-		require.Equal(t, 1, systemBotDMPostCount(t, th, th.BasicUser.Id), "re-run in the same bucket must not duplicate")
+		require.Len(t, systemBotDMMessages(t, th, th.BasicUser.Id), 1, "re-run in the same bucket must not duplicate")
 	})
 
 	t.Run("token already inside window sends only the current bucket, not a catch-up burst", func(t *testing.T) {
@@ -103,12 +106,27 @@ func TestNotifyPersonalAccessTokensExpiring(t *testing.T) {
 		require.NoError(t, err)
 
 		require.NoError(t, th.App.NotifyPersonalAccessTokensExpiring())
-		require.Equal(t, 1, systemBotDMPostCount(t, th, th.BasicUser.Id), "exactly one warning, no 7+3 burst")
+		messages := systemBotDMMessages(t, th, th.BasicUser.Id)
+		require.Len(t, messages, 1, "exactly one warning, no 7+3 burst")
+		require.Contains(t, messages[0], "3 days or less", "2-day token is in the 3-day bucket")
 
 		stored, err := th.App.Srv().Store().UserAccessToken().Get(token.Id)
 		require.NoError(t, err)
-		require.NotNil(t, stored.LastNotifiedThreshold)
-		require.Equal(t, 3, *stored.LastNotifiedThreshold, "marker advances straight to the 3-day bucket")
+		require.NotNil(t, stored.LastNotifiedAt, "last-notified time should be recorded")
+	})
+
+	t.Run("sub-day token uses the 24-hour wording", func(t *testing.T) {
+		th := setup(t)
+
+		token := &model.UserAccessToken{Token: model.NewId(), UserId: th.BasicUser.Id, Description: "almost gone", ExpiresAt: model.GetMillis() + 12*60*60*1000}
+		_, err := th.App.Srv().Store().UserAccessToken().Save(token)
+		require.NoError(t, err)
+
+		require.NoError(t, th.App.NotifyPersonalAccessTokensExpiring())
+		messages := systemBotDMMessages(t, th, th.BasicUser.Id)
+		require.Len(t, messages, 1)
+		require.Contains(t, messages[0], "within 24 hours", "sub-day token uses the dedicated 24-hour message")
+		require.NotContains(t, messages[0], "day", "the 24-hour message must not mention days")
 	})
 
 	t.Run("bot-owned token is not notified", func(t *testing.T) {
@@ -122,10 +140,10 @@ func TestNotifyPersonalAccessTokensExpiring(t *testing.T) {
 		require.NoError(t, err)
 
 		require.NoError(t, th.App.NotifyPersonalAccessTokensExpiring())
-		require.Equal(t, 0, systemBotDMPostCount(t, th, bot.UserId), "bot accounts must not be warned")
+		require.Empty(t, systemBotDMMessages(t, th, bot.UserId), "bot accounts must not be warned")
 
 		stored, err := th.App.Srv().Store().UserAccessToken().Get(token.Id)
 		require.NoError(t, err)
-		require.Nil(t, stored.LastNotifiedThreshold, "bot token marker must stay unset")
+		require.Nil(t, stored.LastNotifiedAt, "bot token marker must stay unset")
 	})
 }

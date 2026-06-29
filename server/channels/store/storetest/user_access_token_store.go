@@ -20,7 +20,7 @@ func TestUserAccessTokenStore(t *testing.T, rctx request.CTX, ss store.Store) {
 	t.Run("UserAccessTokenPagination", func(t *testing.T) { testUserAccessTokenPagination(t, rctx, ss) })
 	t.Run("UserAccessTokenExpiry", func(t *testing.T) { testUserAccessTokenExpiry(t, rctx, ss) })
 	t.Run("UserAccessTokenGetExpiring", func(t *testing.T) { testUserAccessTokenGetExpiring(t, rctx, ss) })
-	t.Run("UserAccessTokenUpdateLastNotifiedThreshold", func(t *testing.T) { testUserAccessTokenUpdateLastNotifiedThreshold(t, rctx, ss) })
+	t.Run("UserAccessTokenUpdateLastNotifiedAt", func(t *testing.T) { testUserAccessTokenUpdateLastNotifiedAt(t, rctx, ss) })
 }
 
 func testUserAccessTokenSaveGetDelete(t *testing.T, rctx request.CTX, ss store.Store) {
@@ -386,18 +386,20 @@ func testUserAccessTokenGetExpiring(t *testing.T, rctx request.CTX, ss store.Sto
 	_, err = ss.UserAccessToken().Save(nonExpiring)
 	require.NoError(t, err)
 
-	// Token already notified at the terminal (1-day) bucket: excluded.
+	// Token with 12h left that was already warned within the last day (i.e. at the
+	// terminal 1-day bucket): excluded.
 	terminal := &model.UserAccessToken{Token: model.NewId(), UserId: activeUser.Id, Description: "terminal", ExpiresAt: now + 12*60*60*1000}
 	_, err = ss.UserAccessToken().Save(terminal)
 	require.NoError(t, err)
-	require.NoError(t, ss.UserAccessToken().UpdateLastNotifiedThreshold(terminal.Id, 1))
+	require.NoError(t, ss.UserAccessToken().UpdateLastNotifiedAt(terminal.Id, now))
 
-	// Token notified at the 7-day bucket but now inside the 3-day window: still
-	// returned because the marker (7) has not reached the terminal bucket.
+	// Token warned at the 7-day mark (when 7 days remained) but now inside the
+	// 3-day window: still returned, because the 3-day bucket hasn't been covered.
 	stillNotify := &model.UserAccessToken{Token: model.NewId(), UserId: activeUser.Id, Description: "still-notify", ExpiresAt: now + 2*dayMillisTest}
 	_, err = ss.UserAccessToken().Save(stillNotify)
 	require.NoError(t, err)
-	require.NoError(t, ss.UserAccessToken().UpdateLastNotifiedThreshold(stillNotify.Id, 7))
+	stillNotifyAt := stillNotify.ExpiresAt - 7*dayMillisTest
+	require.NoError(t, ss.UserAccessToken().UpdateLastNotifiedAt(stillNotify.Id, stillNotifyAt))
 
 	// Deactivated user with an in-window token: excluded.
 	deletedUser := &model.User{Email: MakeEmail(), Username: model.NewUsername()}
@@ -439,17 +441,17 @@ func testUserAccessTokenGetExpiring(t *testing.T, rctx request.CTX, ss store.Sto
 	}
 
 	require.Contains(t, got, inWindow.Id, "in-window token should be returned")
-	require.Contains(t, got, stillNotify.Id, "token notified at 7 but now at 3 days should still be returned")
+	require.Contains(t, got, stillNotify.Id, "token warned at 7 days but now inside the 3-day window should still be returned")
 	require.NotContains(t, got, beyond.Id, "token beyond the horizon must not be returned")
 	require.NotContains(t, got, past.Id, "already-expired token must not be returned")
 	require.NotContains(t, got, nonExpiring.Id, "non-expiring token must not be returned")
-	require.NotContains(t, got, terminal.Id, "token at the terminal bucket must not be returned")
+	require.NotContains(t, got, terminal.Id, "token already warned within the terminal bucket must not be returned")
 	require.NotContains(t, got, deactivatedToken.Id, "token owned by a deactivated user must not be returned")
 	require.NotContains(t, got, botToken.Id, "bot token must not be returned")
 
-	require.Nil(t, got[inWindow.Id].LastNotifiedThreshold)
-	require.NotNil(t, got[stillNotify.Id].LastNotifiedThreshold)
-	require.Equal(t, 7, *got[stillNotify.Id].LastNotifiedThreshold)
+	require.Nil(t, got[inWindow.Id].LastNotifiedAt)
+	require.NotNil(t, got[stillNotify.Id].LastNotifiedAt)
+	require.Equal(t, stillNotifyAt, *got[stillNotify.Id].LastNotifiedAt)
 
 	// Results must be ordered by ExpiresAt ascending (most urgent first); the
 	// worker relies on this to drain a batch in expiry order. stillNotify (2d)
@@ -484,34 +486,36 @@ func indexOfToken(tokens []*model.UserAccessToken, id string) int {
 	return -1
 }
 
-func testUserAccessTokenUpdateLastNotifiedThreshold(t *testing.T, rctx request.CTX, ss store.Store) {
+func testUserAccessTokenUpdateLastNotifiedAt(t *testing.T, rctx request.CTX, ss store.Store) {
 	token := &model.UserAccessToken{
 		Token:       model.NewId(),
 		UserId:      model.NewId(),
-		Description: "threshold",
+		Description: "notified-at",
 		ExpiresAt:   model.GetMillis() + dayMillisTest,
 	}
 	_, err := ss.UserAccessToken().Save(token)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = ss.UserAccessToken().Delete(token.Id) })
 
-	// A freshly saved token has no threshold set (NULL -> nil).
+	// A freshly saved token has no last-notified time set (NULL -> nil).
 	stored, err := ss.UserAccessToken().Get(token.Id)
 	require.NoError(t, err)
-	require.Nil(t, stored.LastNotifiedThreshold)
+	require.Nil(t, stored.LastNotifiedAt)
 
-	require.NoError(t, ss.UserAccessToken().UpdateLastNotifiedThreshold(token.Id, 7))
+	first := model.GetMillis()
+	require.NoError(t, ss.UserAccessToken().UpdateLastNotifiedAt(token.Id, first))
 	stored, err = ss.UserAccessToken().Get(token.Id)
 	require.NoError(t, err)
-	require.NotNil(t, stored.LastNotifiedThreshold)
-	require.Equal(t, 7, *stored.LastNotifiedThreshold)
+	require.NotNil(t, stored.LastNotifiedAt)
+	require.Equal(t, first, *stored.LastNotifiedAt)
 
-	// The marker can be advanced to a smaller (more urgent) bucket.
-	require.NoError(t, ss.UserAccessToken().UpdateLastNotifiedThreshold(token.Id, 3))
+	// A later warning advances the timestamp.
+	second := first + dayMillisTest
+	require.NoError(t, ss.UserAccessToken().UpdateLastNotifiedAt(token.Id, second))
 	stored, err = ss.UserAccessToken().Get(token.Id)
 	require.NoError(t, err)
-	require.NotNil(t, stored.LastNotifiedThreshold)
-	require.Equal(t, 3, *stored.LastNotifiedThreshold)
+	require.NotNil(t, stored.LastNotifiedAt)
+	require.Equal(t, second, *stored.LastNotifiedAt)
 }
 
 const dayMillisTest = int64(24 * 60 * 60 * 1000)

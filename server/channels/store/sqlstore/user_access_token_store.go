@@ -33,7 +33,7 @@ func newSqlUserAccessTokenStore(sqlStore *SqlStore) store.UserAccessTokenStore {
 			"UserAccessTokens.Description",
 			"UserAccessTokens.IsActive",
 			"UserAccessTokens.ExpiresAt",
-			"UserAccessTokens.LastNotifiedThreshold",
+			"UserAccessTokens.LastNotifiedAt",
 		).
 		From("UserAccessTokens")
 
@@ -279,15 +279,17 @@ func (s SqlUserAccessTokenStore) GetExpiredBefore(cutoff int64, limit int) ([]*m
 //
 // Only *actionable* rows are returned: for each threshold T a token qualifies
 // when it has entered the T-day bucket (ExpiresAt <= now + T days) and has not
-// yet been notified at T or a more urgent bucket (LastNotifiedThreshold IS NULL
-// OR > T). OR-ing this across every threshold yields exactly the tokens whose
-// current (most urgent) bucket is still un-notified, so tokens already warned at
-// their current bucket never consume a result slot — without this, a backlog of
-// already-warned tokens ordered ahead of a less-urgent unnotified token could
-// starve it past the limit on every run. The worker still recomputes each
-// token's bucket and re-checks the marker as a guard against races. The secret
-// Token column is intentionally NOT selected — callers use the returned rows for
-// metadata (notification, marker update) only.
+// yet been notified at T or a more urgent bucket. "Not yet notified at T" means
+// the last warning (if any) was sent while more than T days remained, i.e.
+// LastNotifiedAt < ExpiresAt - T days (or LastNotifiedAt IS NULL). OR-ing this
+// across every threshold yields exactly the tokens whose current (most urgent)
+// bucket is still un-notified, so tokens already warned at their current bucket
+// never consume a result slot — without this, a backlog of already-warned tokens
+// ordered ahead of a less-urgent unnotified token could starve it past the limit
+// on every run. The worker still recomputes each token's bucket and re-checks the
+// last-notified time as a guard against races. The secret Token column is
+// intentionally NOT selected — callers use the returned rows for metadata
+// (notification, marker update) only.
 //
 // A non-positive limit or empty thresholds returns an empty slice without
 // hitting the DB rather than relying on the int -> uint64 cast (which would
@@ -302,11 +304,12 @@ func (s SqlUserAccessTokenStore) GetExpiringTokens(now int64, thresholds []int, 
 
 	actionable := sq.Or{}
 	for _, t := range thresholds {
+		bucketMillis := int64(t) * model.DayInMilliseconds
 		actionable = append(actionable, sq.And{
-			sq.LtOrEq{"UserAccessTokens.ExpiresAt": now + int64(t)*model.DayInMilliseconds},
+			sq.LtOrEq{"UserAccessTokens.ExpiresAt": now + bucketMillis},
 			sq.Or{
-				sq.Eq{"UserAccessTokens.LastNotifiedThreshold": nil},
-				sq.Gt{"UserAccessTokens.LastNotifiedThreshold": t},
+				sq.Eq{"UserAccessTokens.LastNotifiedAt": nil},
+				sq.Expr("UserAccessTokens.LastNotifiedAt < UserAccessTokens.ExpiresAt - ?", bucketMillis),
 			},
 		})
 	}
@@ -318,7 +321,7 @@ func (s SqlUserAccessTokenStore) GetExpiringTokens(now int64, thresholds []int, 
 			"UserAccessTokens.Description",
 			"UserAccessTokens.IsActive",
 			"UserAccessTokens.ExpiresAt",
-			"UserAccessTokens.LastNotifiedThreshold",
+			"UserAccessTokens.LastNotifiedAt",
 		).
 		From("UserAccessTokens").
 		InnerJoin("Users ON Users.Id = UserAccessTokens.UserId").
@@ -338,12 +341,12 @@ func (s SqlUserAccessTokenStore) GetExpiringTokens(now int64, thresholds []int, 
 	return tokens, nil
 }
 
-// UpdateLastNotifiedThreshold records the warning bucket (in days) for which the
-// token owner was most recently notified, so the hourly pat_expiry_notify job
-// does not re-send the same warning on subsequent runs.
-func (s SqlUserAccessTokenStore) UpdateLastNotifiedThreshold(tokenId string, threshold int) error {
-	if _, err := s.GetMaster().Exec("UPDATE UserAccessTokens SET LastNotifiedThreshold = ? WHERE Id = ?", threshold, tokenId); err != nil {
-		return errors.Wrapf(err, "failed to update LastNotifiedThreshold for UserAccessToken with id=%s", tokenId)
+// UpdateLastNotifiedAt records the time (Unix milliseconds) at which the token
+// owner was most recently warned about the token's upcoming expiry, so the hourly
+// pat_expiry_notify job does not re-send the same warning on subsequent runs.
+func (s SqlUserAccessTokenStore) UpdateLastNotifiedAt(tokenId string, notifiedAt int64) error {
+	if _, err := s.GetMaster().Exec("UPDATE UserAccessTokens SET LastNotifiedAt = ? WHERE Id = ?", notifiedAt, tokenId); err != nil {
+		return errors.Wrapf(err, "failed to update LastNotifiedAt for UserAccessToken with id=%s", tokenId)
 	}
 	return nil
 }

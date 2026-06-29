@@ -14417,10 +14417,10 @@ func (s *TimerLayerUserAccessTokenStore) Search(term string) ([]*model.UserAcces
 	return result, err
 }
 
-func (s *TimerLayerUserAccessTokenStore) UpdateLastNotifiedThreshold(tokenID string, threshold int) error {
+func (s *TimerLayerUserAccessTokenStore) UpdateLastNotifiedAt(tokenID string, notifiedAt int64) error {
 	start := time.Now()
 
-	err := s.UserAccessTokenStore.UpdateLastNotifiedThreshold(tokenID, threshold)
+	err := s.UserAccessTokenStore.UpdateLastNotifiedAt(tokenID, notifiedAt)
 
 	elapsed := float64(time.Since(start)) / float64(time.Second)
 	if s.Root.Metrics != nil {
@@ -14428,7 +14428,7 @@ func (s *TimerLayerUserAccessTokenStore) UpdateLastNotifiedThreshold(tokenID str
 		if err == nil {
 			success = "true"
 		}
-		s.Root.Metrics.ObserveStoreMethodDuration("UserAccessTokenStore.UpdateLastNotifiedThreshold", success, elapsed)
+		s.Root.Metrics.ObserveStoreMethodDuration("UserAccessTokenStore.UpdateLastNotifiedAt", success, elapsed)
 	}
 	return err
 }
