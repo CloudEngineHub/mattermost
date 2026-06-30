@@ -35,7 +35,7 @@ describe('Message Reply too long', () => {
         cy.get('.post-error').should('not.exist');
 
         // # Enter too long text into RHS
-        const maxReplyLength = 16383;
+        const maxReplyLength = 262144;
         const replyTooLong = replyValid.repeat((maxReplyLength / replyValid.length) + 1);
         cy.uiGetReplyTextBox().invoke('val', replyTooLong).trigger('input');
 
