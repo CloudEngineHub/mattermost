@@ -3,23 +3,19 @@
 
 import React, {
     useCallback,
-    useEffect,
     useMemo,
     useState,
     useRef,
 } from 'react';
-import {FormattedMessage, useIntl} from 'react-intl';
+import {useIntl} from 'react-intl';
 import {shallowEqual, useSelector, useDispatch} from 'react-redux';
 
-import type {WebSocketClient} from '@mattermost/client';
 import {GenericModal} from '@mattermost/components';
 import type {Channel} from '@mattermost/types/channels';
 
 import Permissions from 'mattermost-redux/constants/permissions';
 import {getChannel} from 'mattermost-redux/selectors/entities/channels';
 import {getConfig, getLicense, isChannelPermissionPoliciesEnabled} from 'mattermost-redux/selectors/entities/general';
-import {getTheme} from 'mattermost-redux/selectors/entities/preferences';
-import type {Theme} from 'mattermost-redux/selectors/entities/preferences';
 import {haveIChannelPermission, haveISystemPermission} from 'mattermost-redux/selectors/entities/roles';
 
 import {
@@ -31,24 +27,19 @@ import {getChannelSettingsTabs} from 'selectors/plugins';
 
 import type {Tab as SidebarTab} from 'components/settings_sidebar/settings_sidebar';
 import {normalizePluginIcon} from 'components/settings_sidebar/settings_sidebar';
-import SaveChangesPanel from 'components/widgets/modals/components/save_changes_panel';
 
-import webSocketClient from 'client/web_websocket_client';
-import PluggableErrorBoundary from 'plugins/pluggable/error_boundary';
 import {focusElement} from 'utils/a11y_utils';
 import Constants from 'utils/constants';
 import {isMinimumEnterpriseAdvancedLicense} from 'utils/license_utils';
 
-import type {ChannelSettingsTabBodyProps, ChannelSettingsTabHandlers} from 'types/plugins/channel_settings';
 import type {GlobalState} from 'types/store';
-import type {ChannelSettingsCustomTabComponent, ChannelSettingsTabComponent} from 'types/store/plugins';
 
 import ChannelSettingsAccessRulesTab from './channel_settings_access_rules_tab';
 import ChannelSettingsArchiveTab from './channel_settings_archive_tab';
 import ChannelSettingsConfigurationTab from './channel_settings_configuration_tab';
 import ChannelSettingsInfoTab from './channel_settings_info_tab';
 import ChannelSettingsPermissionsPolicyTab from './channel_settings_permissions_policy_tab';
-import ChannelSettingsPluginSchemaTab from './channel_settings_plugin_schema_tab';
+import ChannelSettingsPluginTab from './channel_settings_plugin_tab';
 
 import './channel_settings_modal.scss';
 
@@ -100,123 +91,6 @@ function getPreferredActiveTab(activeTab: string, visibleBuiltInTabs: SidebarTab
     }
 
     return visibleBuiltInTabs[0]?.name ?? visiblePluginTabs[0]?.name ?? BuiltInTabIds.INFO;
-}
-
-function getFirstVisibleTab(shouldShowInfoTab: boolean, shouldShowAccessRulesTab: boolean, shouldShowPermissionsPolicyTab: boolean, shouldShowConfigurationTab: boolean, shouldShowArchiveTab: boolean) {
-    if (shouldShowInfoTab) {
-        return BuiltInTabIds.INFO;
-    }
-    if (shouldShowAccessRulesTab) {
-        return BuiltInTabIds.ACCESS_RULES;
-    }
-
-    // Invariant (see callsite): `shouldShowPermissionsPolicyTab`
-    // implies `shouldShowAccessRulesTab` because it is computed as
-    // `shouldShowAccessRulesTab && permissionPoliciesEnabled`. The
-    // ACCESS_RULES branch above therefore already returns whenever
-    // PERMISSIONS_POLICY is visible, so the branch below is currently
-    // unreachable. We keep it as a defensive fallback so this helper
-    // stays correct if that derivation is relaxed (e.g. permissions
-    // policies become independently visible without access rules).
-    if (shouldShowPermissionsPolicyTab) {
-        return BuiltInTabIds.PERMISSIONS_POLICY;
-    }
-    if (shouldShowConfigurationTab) {
-        return BuiltInTabIds.CONFIGURATION;
-    }
-    if (shouldShowArchiveTab) {
-        return BuiltInTabIds.ARCHIVE;
-    }
-    return BuiltInTabIds.INFO;
-}
-
-// Host props injected into a custom tab body alongside the plugin contract.
-type HostInjectedProps = {theme: Theme; webSocketClient: WebSocketClient};
-
-type CustomTabBodyProps = ChannelSettingsTabBodyProps & {
-    registration: ChannelSettingsCustomTabComponent;
-    theme: Theme;
-};
-
-function CustomTabBody({registration, theme, channel, setUnsaved, registerHandlers}: CustomTabBodyProps) {
-    // The plugin contract omits theme/webSocketClient; cast to inject them as the host did via Pluggable.
-    const Component = registration.component as React.ComponentType<ChannelSettingsTabBodyProps & HostInjectedProps>;
-    return (
-        <Component
-            channel={channel}
-            setUnsaved={setUnsaved}
-            registerHandlers={registerHandlers}
-            theme={theme}
-            webSocketClient={webSocketClient}
-        />
-    );
-}
-
-type ChannelSettingsPluginTabProps = {
-    channel: Channel;
-    registration: ChannelSettingsTabComponent;
-    areThereUnsavedChanges: boolean;
-    showTabSwitchError: boolean;
-    registerHandlers: (handlers: ChannelSettingsTabHandlers | null) => void;
-    setUnsaved: (unsaved: boolean) => void;
-    handleSaveBarSubmit: () => void;
-    handleSaveBarCancel: () => void;
-    handleSaveBarClose: () => void;
-};
-
-function ChannelSettingsPluginTab({
-    channel,
-    registration,
-    areThereUnsavedChanges,
-    showTabSwitchError,
-    registerHandlers,
-    setUnsaved,
-    handleSaveBarSubmit,
-    handleSaveBarCancel,
-    handleSaveBarClose,
-}: ChannelSettingsPluginTabProps) {
-    const theme = useSelector(getTheme);
-
-    return (
-        <>
-            <div className='ChannelSettingsModal__pluginTab'>
-                {registration.kind === 'schema' ? (
-                    <ChannelSettingsPluginSchemaTab
-                        schema={registration.schema}
-                        pluginId={registration.pluginId}
-                        channel={channel}
-                        setUnsaved={setUnsaved}
-                        registerHandlers={registerHandlers}
-                    />
-                ) : (
-                    <PluggableErrorBoundary pluginId={registration.pluginId}>
-                        <CustomTabBody
-                            registration={registration}
-                            channel={channel}
-                            setUnsaved={setUnsaved}
-                            registerHandlers={registerHandlers}
-                            theme={theme}
-                        />
-                    </PluggableErrorBoundary>
-                )}
-            </div>
-            {areThereUnsavedChanges && (
-                <SaveChangesPanel
-                    handleSubmit={handleSaveBarSubmit}
-                    handleCancel={handleSaveBarCancel}
-                    handleClose={handleSaveBarClose}
-                    tabChangeError={showTabSwitchError}
-                    state={showTabSwitchError ? 'error' : 'editing'}
-                    cancelButtonText={
-                        <FormattedMessage
-                            id='channel_settings.save_changes_panel.reset'
-                            defaultMessage='Reset'
-                        />
-                    }
-                />
-            )}
-        </>
-    );
 }
 
 function ChannelSettingsModal({channelId, isOpen, onExited, focusOriginElement}: ChannelSettingsModalProps) {
@@ -327,11 +201,9 @@ function ChannelSettingsModal({channelId, isOpen, onExited, focusOriginElement}:
 
     const [show, setShow] = useState(isOpen);
 
-    // First visible tab (in tab order) for when Info is not available
-    const firstVisibleTab = getFirstVisibleTab(shouldShowInfoTab, shouldShowAccessRulesTab, shouldShowPermissionsPolicyTab, shouldShowConfigurationTab, shouldShowArchiveTab);
-
-    // Active tab
-    const [activeTab, setActiveTab] = useState<string>(firstVisibleTab);
+    // The user's selected tab. The tab actually shown is derived as `activeTab`
+    // below so a selection that becomes unavailable falls back automatically.
+    const [selectedTab, setSelectedTab] = useState<string>(BuiltInTabIds.INFO);
 
     // State for showing error in the save changes panel when trying to switch tabs with unsaved changes
     const [showTabSwitchError, setShowTabSwitchError] = useState(false);
@@ -344,9 +216,6 @@ function ChannelSettingsModal({channelId, isOpen, onExited, focusOriginElement}:
 
     // Refs
     const modalBodyRef = useRef<HTMLDivElement>(null);
-
-    // Save/Reset handlers registered by the active plugin tab (schema or custom).
-    const activeTabHandlersRef = useRef<ChannelSettingsTabHandlers | null>(null);
 
     const tabs = useMemo((): SidebarTab[] => {
         return [
@@ -383,21 +252,16 @@ function ChannelSettingsModal({channelId, isOpen, onExited, focusOriginElement}:
                 uiName: formatMessage({id: 'channel_settings.tab.archive', defaultMessage: 'Archive Channel'}),
                 icon: 'icon icon-archive-outline',
                 iconTitle: formatMessage({id: 'generic_icons.archive', defaultMessage: 'Archive Icon'}),
-                display: channel.name !== Constants.DEFAULT_CHANNEL &&
-                    ((channel.type === Constants.PRIVATE_CHANNEL && canArchivePrivateChannels) ||
-                    (channel.type === Constants.OPEN_CHANNEL && canArchivePublicChannels)),
+                display: shouldShowArchiveTab,
             },
         ];
     }, [
-        canArchivePrivateChannels,
-        canArchivePublicChannels,
-        channel.name,
-        channel.type,
         formatMessage,
         shouldShowInfoTab,
         shouldShowAccessRulesTab,
         shouldShowPermissionsPolicyTab,
         shouldShowConfigurationTab,
+        shouldShowArchiveTab,
     ]);
 
     const pluginTabs = useMemo((): SidebarTab[] => {
@@ -413,7 +277,14 @@ function ChannelSettingsModal({channelId, isOpen, onExited, focusOriginElement}:
 
     const visibleBuiltInTabs = useMemo(() => tabs.filter((tab) => tab.display !== false), [tabs]);
     const visiblePluginTabs = useMemo(() => pluginTabs.filter((tab) => tab.display !== false), [pluginTabs]);
-    const preferredActiveTab = useMemo(() => getPreferredActiveTab(activeTab, visibleBuiltInTabs, visiblePluginTabs), [activeTab, visibleBuiltInTabs, visiblePluginTabs]);
+
+    // The tab to actually display: the user's selection if still visible,
+    // otherwise the first available tab. Derived rather than stored so we never
+    // need to sync state back when visibility changes. As a result, a tab that
+    // becomes unavailable mid-edit switches away even with unsaved changes —
+    // an acceptable trade for avoiding the extra render the old sync caused.
+    const activeTab = useMemo(() => getPreferredActiveTab(selectedTab, visibleBuiltInTabs, visiblePluginTabs), [selectedTab, visibleBuiltInTabs, visiblePluginTabs]);
+
     const activePluginRegistrationId = getPluginRegistrationId(activeTab);
     const visibleActivePluginRegistration = useMemo(() => {
         if (!activePluginRegistrationId) {
@@ -423,44 +294,12 @@ function ChannelSettingsModal({channelId, isOpen, onExited, focusOriginElement}:
         return visiblePluginTabRegistrations.find((registration) => registration.id === activePluginRegistrationId);
     }, [activePluginRegistrationId, visiblePluginTabRegistrations]);
 
-    const registerHandlers = useCallback((handlers: ChannelSettingsTabHandlers | null) => {
-        activeTabHandlersRef.current = handlers;
-    }, []);
-
     const setUnsaved = useCallback((unsaved: boolean) => {
         setAreThereUnsavedChanges(unsaved);
         if (!unsaved) {
             setHasBeenWarned(false);
         }
     }, []);
-
-    const handleSaveBarSubmit = useCallback(async () => {
-        const handlers = activeTabHandlersRef.current;
-        if (!handlers) {
-            return;
-        }
-        try {
-            await handlers.save();
-            setUnsaved(false);
-        } catch {
-            // The plugin owns user-visible errors; dirty state remains until the plugin clears it.
-        }
-    }, [setUnsaved]);
-
-    const handleSaveBarCancel = useCallback(() => {
-        activeTabHandlersRef.current?.reset();
-        setUnsaved(false);
-    }, [setUnsaved]);
-
-    const handleSaveBarClose = useCallback(() => {
-        // Host does not use the transient 'saved' state for plugin tabs.
-    }, []);
-
-    useEffect(() => {
-        if (preferredActiveTab !== activeTab && !areThereUnsavedChanges) {
-            setActiveTab(preferredActiveTab);
-        }
-    }, [activeTab, preferredActiveTab, areThereUnsavedChanges]);
 
     // Called to set the active tab, prompting save changes panel if there are unsaved changes
     const updateTab = (newTab: string) => {
@@ -478,7 +317,7 @@ function ChannelSettingsModal({channelId, isOpen, onExited, focusOriginElement}:
         }
 
         if (newTab !== activeTab) {
-            setActiveTab(newTab);
+            setSelectedTab(newTab);
         }
 
         if (modalBodyRef.current) {
@@ -511,7 +350,7 @@ function ChannelSettingsModal({channelId, isOpen, onExited, focusOriginElement}:
     // Called after the fade-out completes
     const handleExited = () => {
         // Clear anything if needed
-        setActiveTab(BuiltInTabIds.INFO);
+        setSelectedTab(BuiltInTabIds.INFO);
         setHasBeenWarned(false);
         if (focusOriginElement) {
             focusElement(focusOriginElement, true);
@@ -600,11 +439,7 @@ function ChannelSettingsModal({channelId, isOpen, onExited, focusOriginElement}:
                     registration={visibleActivePluginRegistration}
                     areThereUnsavedChanges={areThereUnsavedChanges}
                     showTabSwitchError={showTabSwitchError}
-                    registerHandlers={registerHandlers}
                     setUnsaved={setUnsaved}
-                    handleSaveBarSubmit={handleSaveBarSubmit}
-                    handleSaveBarCancel={handleSaveBarCancel}
-                    handleSaveBarClose={handleSaveBarClose}
                 />
             );
         }

@@ -42,9 +42,8 @@ export type ChannelSettingsTabHandlers = {
 };
 
 /**
- * Props passed to the body of a channel settings tab. Custom plugin components
- * receive these (plus `theme`/`webSocketClient` from the host) and drive the
- * host save bar by registering handlers and reporting unsaved changes.
+ * Props passed to the body of a custom channel settings tab. The plugin drives
+ * the host save bar by registering handlers and reporting unsaved changes.
  */
 export type ChannelSettingsTabBodyProps = {
 
