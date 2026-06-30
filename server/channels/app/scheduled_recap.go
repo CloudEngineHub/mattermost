@@ -267,10 +267,12 @@ func (a *App) CreateRecapFromSchedule(rctx request.CTX, sr *model.ScheduledRecap
 		Data: jobData,
 	})
 	if jobErr != nil {
-		if deleteErr := a.Srv().Store().Recap().DeleteRecap(savedRecap.Id); deleteErr != nil {
-			rctx.Logger().Warn("Failed to clean up orphaned recap after job creation failure",
+		// The recap row is already committed but its job never enqueued, so flag it
+		// skipped to free the daily-limit slot for a recap that will never run.
+		if skipErr := a.Srv().Store().Recap().MarkRecapSkipped(savedRecap.Id, model.SkipReasonJobCreationFailed); skipErr != nil {
+			rctx.Logger().Warn("Failed to mark orphaned recap as skipped after job creation failure",
 				mlog.String("recap_id", savedRecap.Id),
-				mlog.Err(deleteErr),
+				mlog.Err(skipErr),
 			)
 		}
 		return nil, jobErr

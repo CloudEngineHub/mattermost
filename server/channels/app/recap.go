@@ -98,6 +98,14 @@ func (a *App) CreateRecap(rctx request.CTX, title string, channelIDs []string, a
 	})
 
 	if jobErr != nil {
+		// The recap row is already committed but its job never enqueued, so flag it
+		// skipped to free the daily-limit slot for a recap that will never run.
+		if skipErr := a.Srv().Store().Recap().MarkRecapSkipped(savedRecap.Id, model.SkipReasonJobCreationFailed); skipErr != nil {
+			rctx.Logger().Warn("Failed to mark orphaned recap as skipped after job creation failure",
+				mlog.String("recap_id", savedRecap.Id),
+				mlog.Err(skipErr),
+			)
+		}
 		return nil, jobErr
 	}
 

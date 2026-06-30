@@ -292,6 +292,59 @@ func TestRecapStore(t *testing.T) {
 			require.ErrorAs(t, err, &limitErr)
 		})
 
+		t.Run("MarkRecapSkippedFreesDailyCount", func(t *testing.T) {
+			userId := model.NewId()
+			since := model.GetMillis() - 1000
+
+			recap := &model.Recap{
+				Id:       model.NewId(),
+				UserId:   userId,
+				Title:    "Orphan Recap",
+				CreateAt: model.GetMillis(),
+				UpdateAt: model.GetMillis(),
+				Status:   model.RecapStatusPending,
+				BotID:    "test-bot-id",
+			}
+			_, err := ss.Recap().SaveRecap(recap)
+			require.NoError(t, err)
+
+			count, err := ss.Recap().CountForUserSince(userId, since)
+			require.NoError(t, err)
+			assert.Equal(t, int64(1), count, "pending recap should count toward the daily limit")
+
+			err = ss.Recap().MarkRecapSkipped(recap.Id, model.SkipReasonJobCreationFailed)
+			require.NoError(t, err)
+
+			updated, err := ss.Recap().GetRecap(recap.Id)
+			require.NoError(t, err)
+			assert.Equal(t, model.RecapStatusSkipped, updated.Status)
+			assert.Equal(t, model.SkipReasonJobCreationFailed, updated.SkipReason)
+
+			count, err = ss.Recap().CountForUserSince(userId, since)
+			require.NoError(t, err)
+			assert.Equal(t, int64(0), count, "skipped recap should no longer consume a daily slot")
+
+			// The pending-only guard must not clobber a recap a worker has already started.
+			completed := &model.Recap{
+				Id:       model.NewId(),
+				UserId:   userId,
+				Title:    "Completed Recap",
+				CreateAt: model.GetMillis(),
+				UpdateAt: model.GetMillis(),
+				Status:   model.RecapStatusCompleted,
+				BotID:    "test-bot-id",
+			}
+			_, err = ss.Recap().SaveRecap(completed)
+			require.NoError(t, err)
+
+			err = ss.Recap().MarkRecapSkipped(completed.Id, model.SkipReasonJobCreationFailed)
+			require.NoError(t, err)
+
+			unchanged, err := ss.Recap().GetRecap(completed.Id)
+			require.NoError(t, err)
+			assert.Equal(t, model.RecapStatusCompleted, unchanged.Status, "non-pending recap must not be flipped to skipped")
+		})
+
 		t.Run("GetLastCompletedManualRecapIncludesSoftDeletedRecaps", func(t *testing.T) {
 			userId := model.NewId()
 			baseTime := model.GetMillis()

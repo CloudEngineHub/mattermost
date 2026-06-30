@@ -16,7 +16,7 @@ type Recap struct {
 	Status            string          `json:"status"`
 	BotID             string          `json:"bot_id"`
 	ScheduledRecapId  string          `json:"scheduled_recap_id,omitempty"` // Set if created from scheduled recap
-	SkipReason        string          `json:"skip_reason,omitempty"`        // Why recap was skipped (daily_limit, cooldown)
+	SkipReason        string          `json:"skip_reason,omitempty"`        // Why the recap was skipped; see SkipReason* constants
 	Channels          []*RecapChannel `json:"channels,omitempty"`
 }
 
@@ -59,13 +59,14 @@ const (
 	RecapStatusProcessing = "processing"
 	RecapStatusCompleted  = "completed"
 	RecapStatusFailed     = "failed"
-	RecapStatusSkipped    = "skipped" // Recap skipped due to limit violation
+	RecapStatusSkipped    = "skipped" // Recap skipped due to a limit violation or a non-recoverable creation failure
 )
 
-// Skip reason constants for when a recap is skipped due to limits
+// Skip reason constants for when a recap is skipped
 const (
-	SkipReasonDailyLimit = "daily_limit_reached"
-	SkipReasonCooldown   = "cooldown_active"
+	SkipReasonDailyLimit        = "daily_limit_reached"
+	SkipReasonCooldown          = "cooldown_active"
+	SkipReasonJobCreationFailed = "job_creation_failed" // Recap row committed but its processing job could not be enqueued
 )
 
 // Auditable returns safe-to-log fields for audit logging

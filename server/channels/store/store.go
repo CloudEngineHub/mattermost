@@ -1410,6 +1410,10 @@ type RecapStore interface {
 	GetRecap(id string) (*model.Recap, error)
 	GetRecapsForUser(userId string, page, perPage int) ([]*model.Recap, error)
 	UpdateRecapStatus(id, status string) error
+	// MarkRecapSkipped flips a recap to the skipped status with the given reason.
+	// Skipped recaps are excluded from the daily-limit count, so this frees the slot
+	// for a recap that never ran (e.g. its processing job failed to enqueue).
+	MarkRecapSkipped(id, reason string) error
 	MarkRecapAsRead(id string) error
 	MarkRecapsAsViewed(userId string, statuses []string) ([]string, error)
 	DeleteRecap(id string) error

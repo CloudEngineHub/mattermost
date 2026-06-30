@@ -9171,6 +9171,22 @@ func (s *TimerLayerRecapStore) MarkRecapAsRead(id string) error {
 	return err
 }
 
+func (s *TimerLayerRecapStore) MarkRecapSkipped(id string, reason string) error {
+	start := time.Now()
+
+	err := s.RecapStore.MarkRecapSkipped(id, reason)
+
+	elapsed := float64(time.Since(start)) / float64(time.Second)
+	if s.Root.Metrics != nil {
+		success := "false"
+		if err == nil {
+			success = "true"
+		}
+		s.Root.Metrics.ObserveStoreMethodDuration("RecapStore.MarkRecapSkipped", success, elapsed)
+	}
+	return err
+}
+
 func (s *TimerLayerRecapStore) MarkRecapsAsViewed(userId string, statuses []string) ([]string, error) {
 	start := time.Now()
 

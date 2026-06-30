@@ -230,6 +230,25 @@ func (s *SqlRecapStore) UpdateRecapStatus(id, status string) error {
 	return nil
 }
 
+// MarkRecapSkipped flips a still-pending recap to skipped. Scoped to pending so a
+// recap a worker has already started processing is never clobbered.
+func (s *SqlRecapStore) MarkRecapSkipped(id, reason string) error {
+	query := s.getQueryBuilder().
+		Update("Recaps").
+		SetMap(map[string]any{
+			"Status":     model.RecapStatusSkipped,
+			"SkipReason": reason,
+			"UpdateAt":   model.GetMillis(),
+		}).
+		Where(sq.Eq{"Id": id, "Status": model.RecapStatusPending})
+
+	if _, err := s.GetMaster().ExecBuilder(query); err != nil {
+		return errors.Wrapf(err, "failed to mark Recap as skipped for id=%s", id)
+	}
+
+	return nil
+}
+
 func (s *SqlRecapStore) MarkRecapAsRead(id string) error {
 	now := model.GetMillis()
 
