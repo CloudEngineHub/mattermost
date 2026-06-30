@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"runtime"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -234,13 +235,13 @@ func TestExtractTimeout(t *testing.T) {
 
 	t.Run("aborts a slow extraction once the timeout elapses", func(t *testing.T) {
 		start := time.Now()
-		text, err := ExtractWithExtraExtractors(logger, "file.txt", bytes.NewReader(data), ExtractSettings{Timeout: 50 * time.Millisecond}, []Extractor{&slowExtractor{delay: 10 * time.Second}})
+		text, err := ExtractWithExtraExtractors(logger, "file.txt", bytes.NewReader(data), ExtractSettings{Timeout: 50 * time.Millisecond}, []Extractor{&slowExtractor{delay: 500 * time.Millisecond}})
 		elapsed := time.Since(start)
 
 		require.Error(t, err)
 		require.Empty(t, text)
 		assert.Contains(t, err.Error(), "timed out")
-		assert.Less(t, elapsed, 5*time.Second, "should return shortly after the timeout, not wait for the extraction")
+		assert.Less(t, elapsed, 200*time.Millisecond, "should return shortly after the timeout, not wait for the extraction")
 	})
 
 	t.Run("returns the result when extraction finishes within the timeout", func(t *testing.T) {
@@ -420,4 +421,64 @@ func TestArchiveMaxFileSize(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestExtractConcurrency(t *testing.T) {
+	logger := mlog.CreateConsoleTestLogger(t)
+	resetExtractionConcurrencyForTest(1)
+	t.Cleanup(func() { resetExtractionConcurrencyForTest(runtime.NumCPU()) })
+
+	data := []byte("hello world")
+
+	t.Run("rejects new extractions while the concurrency limit is reached", func(t *testing.T) {
+		be := &blockingExtractor{started: make(chan struct{}), release: make(chan struct{})}
+		settings := ExtractSettings{Timeout: 50 * time.Millisecond, ReaderCloser: &recordingCloser{}}
+
+		done := make(chan struct{})
+		go func() {
+			_, _ = ExtractWithExtraExtractors(logger, "file.txt", bytes.NewReader(data), settings, []Extractor{be})
+			close(done)
+		}()
+
+		select {
+		case <-be.started:
+		case <-time.After(2 * time.Second):
+			require.FailNow(t, "first extraction did not start within the deadline")
+		}
+
+		text, err := ExtractWithExtraExtractors(logger, "file.txt", bytes.NewReader(data), ExtractSettings{Timeout: time.Second}, []Extractor{&slowExtractor{delay: 0}})
+		require.Error(t, err)
+		require.Empty(t, text)
+		require.Contains(t, err.Error(), "capacity exhausted")
+
+		close(be.release)
+		select {
+		case <-done:
+		case <-time.After(2 * time.Second):
+			require.FailNow(t, "first extraction did not finish within the deadline")
+		}
+	})
+
+	t.Run("a timed-out extraction keeps its slot until the detached goroutine finishes", func(t *testing.T) {
+		resetExtractionConcurrencyForTest(1)
+
+		be := &blockingExtractor{started: make(chan struct{}), release: make(chan struct{})}
+		settings := ExtractSettings{Timeout: 50 * time.Millisecond, ReaderCloser: &recordingCloser{}}
+
+		_, err := ExtractWithExtraExtractors(logger, "file.txt", bytes.NewReader(data), settings, []Extractor{be})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "timed out")
+
+		select {
+		case <-be.started:
+		case <-time.After(2 * time.Second):
+			require.FailNow(t, "detached extraction did not start within the deadline")
+		}
+
+		_, err = ExtractWithExtraExtractors(logger, "file.txt", bytes.NewReader(data), ExtractSettings{Timeout: time.Second}, []Extractor{&slowExtractor{delay: 0}})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "capacity exhausted")
+
+		close(be.release)
+	})
 }
