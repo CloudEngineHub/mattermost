@@ -165,10 +165,6 @@ func updateJobCmdF(c client.Client, cmd *cobra.Command, args []string) error {
 }
 
 func createJobCmdF(c client.Client, cmd *cobra.Command, args []string) error {
-	// The type is intentionally not validated against model.AllJobTypes: that
-	// list is a curated subset and omits creatable types (e.g. access_control_sync).
-	// The server validates the type per its create-job permissions and returns a
-	// clear error for anything it can't schedule.
 	jobType := args[0]
 
 	data, err := cmd.Flags().GetStringToString("data")

@@ -233,9 +233,6 @@ func (s *MmctlUnitTestSuite) TestCreateJobCmdF() {
 	})
 
 	s.Run("forwards type not in AllJobTypes to the server", func() {
-		// access_control_sync is creatable but absent from model.AllJobTypes,
-		// so the command must not validate against that list and instead let
-		// the server decide.
 		printer.Clean()
 		mockJob := &model.Job{Id: model.NewId(), Type: model.JobTypeAccessControlSync}
 
