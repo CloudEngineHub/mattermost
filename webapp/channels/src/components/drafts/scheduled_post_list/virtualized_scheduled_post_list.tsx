@@ -19,6 +19,24 @@ const TARGET_ID_QUERY_PARAM = 'target_id';
 const OVERSCAN_ROW_COUNT = 10;
 const ROW_HEIGHT_CHANGE_TOLERANCE = 2;
 
+const SCROLL_ECHO_TOLERANCE = 4;
+
+export function isUserInitiatedScroll(
+    scrollUpdateWasRequested: boolean,
+    scrollOffset: number,
+    lastRequestedScrollOffset: number | null,
+): boolean {
+    if (scrollUpdateWasRequested) {
+        return false;
+    }
+
+    if (lastRequestedScrollOffset === null) {
+        return false;
+    }
+
+    return Math.abs(scrollOffset - lastRequestedScrollOffset) > SCROLL_ECHO_TOLERANCE;
+}
+
 // Estimate for rows that haven't been measured yet so react-window can compute
 // approximate offsets and scroll to a far-down target before it has rendered.
 const ESTIMATED_ROW_HEIGHT = 91;
@@ -48,7 +66,7 @@ export default function ScheduledPostList(props: Props) {
     const itemHeightCacheMap = useRef<Map<string, number>>(new Map());
     const hasScrolledToTarget = useRef(false);
     const userHasScrolled = useRef(false);
-    const isFirstScrollCallback = useRef(true);
+    const lastRequestedScrollOffset = useRef<number | null>(null);
 
     const targetIndex = useMemo(() => {
         if (!scheduledPostTargetId) {
@@ -131,14 +149,13 @@ export default function ScheduledPostList(props: Props) {
         listRef.current.scrollToItem(targetIndex, 'center');
     }, [props.scheduledPosts, targetIndex]);
 
-    // react-window fires onScroll once on mount; only treat later un-requested
-    // scrolls as the user taking over so auto-centering stops yanking them back.
-    const handleScroll = useCallback(({scrollUpdateWasRequested}: {scrollUpdateWasRequested: boolean}) => {
-        if (isFirstScrollCallback.current) {
-            isFirstScrollCallback.current = false;
+    const handleScroll = useCallback(({scrollOffset, scrollUpdateWasRequested}: {scrollOffset: number; scrollUpdateWasRequested: boolean}) => {
+        if (scrollUpdateWasRequested) {
+            lastRequestedScrollOffset.current = scrollOffset;
             return;
         }
-        if (!scrollUpdateWasRequested) {
+
+        if (isUserInitiatedScroll(scrollUpdateWasRequested, scrollOffset, lastRequestedScrollOffset.current)) {
             userHasScrolled.current = true;
         }
     }, []);

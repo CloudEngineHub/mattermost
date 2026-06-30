@@ -12,6 +12,8 @@ import {fetchMissingChannels} from 'mattermost-redux/actions/channels';
 import {act, renderWithContext, screen} from 'tests/react_testing_utils';
 import {TestHelper} from 'utils/test_helper';
 
+import {isUserInitiatedScroll} from './virtualized_scheduled_post_list';
+
 import ScheduledPostList from './index';
 
 jest.mock('mattermost-redux/actions/channels', () => ({
@@ -261,5 +263,28 @@ describe('components/drafts/scheduled_post_list', () => {
             rectSpy.mockRestore();
             scrollToItemSpy.mockRestore();
         }
+    });
+});
+
+describe('isUserInitiatedScroll', () => {
+    test('ignores scrolls that react-window itself requested', () => {
+        expect(isUserInitiatedScroll(true, 1000, 200)).toBe(false);
+    });
+
+    test('ignores scrolls seen before we have requested anything', () => {
+        // Mount fires onScroll for the initial offset (and its echo) before the
+        // first programmatic scroll; there is no target to be yanked away from.
+        expect(isUserInitiatedScroll(false, 1000, null)).toBe(false);
+    });
+
+    test('ignores the sub-pixel echo of a scroll we requested', () => {
+        // The browser reports back a fractional scrollTop on HiDPI displays, so
+        // the echo offset is within a pixel of what we asked for.
+        expect(isUserInitiatedScroll(false, 1000.5, 1000)).toBe(false);
+        expect(isUserInitiatedScroll(false, 997, 1000)).toBe(false);
+    });
+
+    test('treats a real user scroll away from the requested offset as user-initiated', () => {
+        expect(isUserInitiatedScroll(false, 1300, 1000)).toBe(true);
     });
 });
