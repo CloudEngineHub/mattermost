@@ -7144,6 +7144,73 @@ func TestRotateUserAccessToken(t *testing.T) {
 		CheckForbiddenStatus(t, resp)
 	})
 
+	t.Run("rotating a disabled token is rejected", func(t *testing.T) {
+		mainHelper.Parallel(t)
+		th := Setup(t).InitBasic(t)
+
+		th.App.UpdateConfig(func(cfg *model.Config) { *cfg.ServiceSettings.EnableUserAccessTokens = true })
+
+		_, appErr := th.App.UpdateUserRoles(th.Context, th.BasicUser.Id, model.SystemUserRoleId+" "+model.SystemUserAccessTokenRoleId, false)
+		require.Nil(t, appErr)
+
+		token, _, err := th.Client.CreateUserAccessToken(context.Background(), th.BasicUser.Id, "test token", 0)
+		require.NoError(t, err)
+
+		_, err = th.Client.DisableUserAccessToken(context.Background(), token.Id)
+		require.NoError(t, err)
+
+		_, resp, err := th.Client.RotateUserAccessToken(context.Background(), token.Id, 0)
+		require.Error(t, err)
+		CheckBadRequestStatus(t, resp)
+	})
+
+	t.Run("non-system-admin cannot rotate a system admin's token", func(t *testing.T) {
+		mainHelper.Parallel(t)
+		th := Setup(t).InitBasic(t)
+
+		th.App.UpdateConfig(func(cfg *model.Config) { *cfg.ServiceSettings.EnableUserAccessTokens = true })
+
+		// Give BasicUser create_user_access_token and edit_other_users but not manage_system.
+		defaultPerms := th.SaveDefaultRolePermissions(t)
+		defer th.RestoreDefaultRolePermissions(t, defaultPerms)
+		th.AddPermissionToRole(t, model.PermissionCreateUserAccessToken.Id, model.SystemUserRoleId)
+		th.AddPermissionToRole(t, model.PermissionEditOtherUsers.Id, model.SystemUserRoleId)
+
+		token, _, err := th.SystemAdminClient.CreateUserAccessToken(context.Background(), th.SystemAdminUser.Id, "admin token", 0)
+		require.NoError(t, err)
+
+		_, resp, err := th.Client.RotateUserAccessToken(context.Background(), token.Id, 0)
+		require.Error(t, err)
+		CheckForbiddenStatus(t, resp)
+	})
+
+	t.Run("rotating a remote user's token is rejected", func(t *testing.T) {
+		mainHelper.Parallel(t)
+		th := Setup(t).InitBasic(t)
+
+		th.App.UpdateConfig(func(cfg *model.Config) { *cfg.ServiceSettings.EnableUserAccessTokens = true })
+
+		remoteId := model.NewId()
+		remoteUser, appErr := th.App.CreateUser(th.Context, &model.User{
+			Email:         th.GenerateTestEmail(),
+			Username:      GenerateTestUsername(),
+			Password:      model.NewTestPassword(),
+			RemoteId:      &remoteId,
+			EmailVerified: true,
+		})
+		require.Nil(t, appErr)
+
+		token, appErr := th.App.CreateUserAccessToken(th.Context, &model.UserAccessToken{
+			UserId:      remoteUser.Id,
+			Description: "remote token",
+		})
+		require.Nil(t, appErr)
+
+		_, resp, err := th.SystemAdminClient.RotateUserAccessToken(context.Background(), token.Id, 0)
+		require.Error(t, err)
+		CheckForbiddenStatus(t, resp)
+	})
+
 	t.Run("expiry too far is rejected when max lifetime is set", func(t *testing.T) {
 		mainHelper.Parallel(t)
 		th := Setup(t).InitBasic(t)
