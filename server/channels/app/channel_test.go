@@ -536,7 +536,7 @@ func TestCreateChannelSpaceRequiresEnableDocs(t *testing.T) {
 		channel, appErr := th.App.CreateChannel(th.Context, newSpace(th.BasicTeam.Id), false)
 		require.Nil(t, appErr)
 		defer func() {
-			require.Nil(t, th.App.PermanentDeleteChannel(th.Context, channel))
+			require.NoError(t, th.App.Srv().Store().Channel().PermanentDelete(th.Context, channel.Id))
 		}()
 		assert.Equal(t, model.ChannelTypeSpace, channel.Type)
 	})
@@ -560,7 +560,7 @@ func TestCreateChannelSpaceRequiresEnableDocs(t *testing.T) {
 		channel, appErr := th.App.CreateChannelWithUser(th.Context, newSpace(th.BasicTeam.Id), th.BasicUser.Id)
 		require.Nil(t, appErr)
 		defer func() {
-			require.Nil(t, th.App.PermanentDeleteChannel(th.Context, channel))
+			require.NoError(t, th.App.Srv().Store().Channel().PermanentDelete(th.Context, channel.Id))
 		}()
 		assert.Equal(t, model.ChannelTypeSpace, channel.Type)
 	})
