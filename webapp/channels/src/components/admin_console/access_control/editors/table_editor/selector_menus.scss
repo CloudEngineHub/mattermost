@@ -30,15 +30,31 @@
 .value-selector-menu-button {
     &__multi-values-container {
         display: flex;
-        overflow: hidden;
+
+        // Keep chips on a single line so the table row height stays constant
+        // regardless of how many values are added. Overflowing chips scroll
+        // horizontally within the cell instead of wrapping onto new lines.
+        overflow-x: auto;
+        overflow-y: hidden;
         flex-grow: 1;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
+        min-width: 0;
         gap: 2px;
+
+        &::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            border-radius: 2px;
+            background: rgba(var(--center-channel-color-rgb), 0.24);
+        }
     }
 
     &__inner-wrapper {
         display: flex;
         width: 100%;
+        min-width: 0;
         align-items: center;
         justify-content: space-between;
     }
@@ -72,6 +88,7 @@
     .select__multi-value {
         display: flex;
         height: 24px;
+        flex: 0 0 auto;
         align-items: center;
         border-radius: 4px;
         margin: 2px;
