@@ -83,7 +83,7 @@ func doUnassign(t *testing.T, client *model.Client4, policyID string, body assig
 }
 
 func TestAssignAccessPolicyTeamIds(t *testing.T) {
-	th := SetupConfig(t, func(cfg *model.Config) { cfg.FeatureFlags.AttributeBasedAccessControl = true }).InitBasic(t)
+	th := SetupConfig(t, func(cfg *model.Config) { cfg.FeatureFlags.TeamMembershipAccessControl = true }).InitBasic(t)
 
 	parent := &model.AccessControlPolicy{
 		ID:       model.NewId(),
@@ -143,7 +143,7 @@ func TestAssignAccessPolicyTeamIds(t *testing.T) {
 }
 
 func TestUnassignAccessPolicyTeamIds(t *testing.T) {
-	th := SetupConfig(t, func(cfg *model.Config) { cfg.FeatureFlags.AttributeBasedAccessControl = true }).InitBasic(t)
+	th := SetupConfig(t, func(cfg *model.Config) { cfg.FeatureFlags.TeamMembershipAccessControl = true }).InitBasic(t)
 
 	policyID := model.NewId()
 
@@ -177,7 +177,6 @@ func TestUnassignAccessPolicyTeamIds(t *testing.T) {
 
 func TestGetTeamAccessControlPolicy(t *testing.T) {
 	th := SetupConfig(t, func(cfg *model.Config) {
-		cfg.FeatureFlags.AttributeBasedAccessControl = true
 		cfg.FeatureFlags.TeamMembershipAccessControl = true
 	}).InitBasic(t)
 
@@ -275,7 +274,6 @@ func TestGetTeamAccessControlPolicy(t *testing.T) {
 
 func TestGetUsersNotInTeamAbacMatchOnly(t *testing.T) {
 	th := SetupConfig(t, func(cfg *model.Config) {
-		cfg.FeatureFlags.AttributeBasedAccessControl = true
 		cfg.FeatureFlags.TeamMembershipAccessControl = true
 	}).InitBasic(t)
 
@@ -328,7 +326,6 @@ func userIDs(users []*model.User) []string {
 // batch; qualifying users in the same batch are still added.
 func TestAddTeamMembersGracefulABACError(t *testing.T) {
 	th := SetupConfig(t, func(cfg *model.Config) {
-		cfg.FeatureFlags.AttributeBasedAccessControl = true
 		cfg.FeatureFlags.TeamMembershipAccessControl = true
 	}).InitBasic(t)
 
