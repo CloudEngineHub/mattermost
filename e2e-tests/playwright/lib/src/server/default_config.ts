@@ -861,6 +861,7 @@ const defaultServerConfig: AdminConfig = {
         EnableUserManagedAttributes: false,
         TrustProxyDeviceIdentityHeader: false,
         EnforceDeviceIDConsistency: false,
+        EnableAuditLogging: false,
     },
     ContentFlaggingSettings: {
         EnableContentFlagging: false,
