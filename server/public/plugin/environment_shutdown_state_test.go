@@ -16,11 +16,13 @@ import (
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
 )
 
-// TestShutdownMarksPluginNotRunningImmediately verifies that Shutdown marks a plugin as not
-// running as soon as its teardown begins, rather than only after every plugin has finished
-// tearing down, so RunMultiPluginHook* stops admitting new dispatches to it right away instead
-// of throughout a slow OnDeactivate call.
-func TestShutdownMarksPluginNotRunningImmediately(t *testing.T) {
+// TestShutdownMarksPluginNotRunningAfterOnDeactivate verifies that Shutdown keeps a plugin
+// reporting as active for the duration of its own OnDeactivate call, so IsActive-gated dispatch
+// (RunMultiPluginHook*) still admits hooks the plugin dispatches back to itself from within
+// OnDeactivate (e.g. via a CreatePost call), then marks it not running once OnDeactivate
+// completes, before its RPC connection is torn down, rather than only after every plugin in the
+// environment has finished tearing down.
+func TestShutdownMarksPluginNotRunningAfterOnDeactivate(t *testing.T) {
 	pluginDir, err := os.MkdirTemp("", "mm-shutdown-state-plugin")
 	require.NoError(t, err)
 	t.Cleanup(func() { os.RemoveAll(pluginDir) })
@@ -77,9 +79,10 @@ func TestShutdownMarksPluginNotRunningImmediately(t *testing.T) {
 		env.Shutdown()
 	}()
 
-	require.Eventually(t, func() bool {
-		return !env.IsActive(pluginID)
-	}, 200*time.Millisecond, 5*time.Millisecond, "IsActive should report false as soon as teardown begins, well before OnDeactivate's 500ms sleep completes")
+	// While OnDeactivate is still running (well within its 500ms sleep), IsActive must still
+	// report true so a plugin dispatching hooks back to itself from OnDeactivate isn't rejected.
+	time.Sleep(200 * time.Millisecond)
+	require.True(t, env.IsActive(pluginID), "IsActive should remain true while OnDeactivate is still running")
 
 	select {
 	case <-shutdownDone:

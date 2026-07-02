@@ -491,16 +491,14 @@ func (env *Environment) Shutdown() {
 			return true
 		}
 
-		// Mark the plugin as not running immediately, before OnDeactivate even starts, so
-		// RunMultiPluginHook* rejects new dispatches to it right away instead of waiting for
-		// every plugin's teardown to finish.
-		env.setPluginState(rp.BundleInfo.Manifest.Id, model.PluginStateNotRunning)
-
 		wg.Add(1)
 
 		done := make(chan bool)
 		go func() {
 			defer close(done)
+			// OnDeactivate runs with the connection still fully live, so a plugin is free to
+			// call back into the API (e.g. CreatePost), which may dispatch further hooks to
+			// itself; don't mark it not-running until this returns.
 			if err := rp.supervisor.Hooks().OnDeactivate(); err != nil {
 				env.logger.Error("Plugin OnDeactivate() error", mlog.String("plugin_id", rp.BundleInfo.Manifest.Id), mlog.Err(err))
 			}
@@ -515,6 +513,10 @@ func (env *Environment) Shutdown() {
 			case <-done:
 			}
 
+			// Mark the plugin as not running now, before killing its RPC connection, so
+			// RunMultiPluginHook* rejects new dispatches to it right away instead of waiting
+			// for every plugin's teardown to finish.
+			env.setPluginState(rp.BundleInfo.Manifest.Id, model.PluginStateNotRunning)
 			rp.supervisor.Shutdown()
 		}()
 
