@@ -305,11 +305,6 @@ export class SchemaAdminSettings extends React.PureComponent<SchemaAdminSettings
             return '';
         }
 
-        let name: string | MessageDescriptor = this.props.schema.id;
-        if (('name' in this.props.schema)) {
-            name = this.props.schema.name;
-        }
-
         const betaBadge = this.props.schema.isBeta && (
             <BetaTag
                 variant='default'
@@ -317,6 +312,26 @@ export class SchemaAdminSettings extends React.PureComponent<SchemaAdminSettings
                 className='admin-header-beta-badge'
             />
         );
+
+        if (this.props.plugin) {
+            return (
+                <AdminHeader>
+                    <PluginMetadataPanel
+                        name={this.props.plugin.name}
+                        id={this.props.plugin.id}
+                        version={this.props.plugin.version}
+                        homepageUrl={this.props.plugin.homepage_url}
+                        releaseNotesUrl={this.props.plugin.release_notes_url}
+                    />
+                    {betaBadge}
+                </AdminHeader>
+            );
+        }
+
+        let name: string | MessageDescriptor = this.props.schema.id;
+        if (('name' in this.props.schema)) {
+            name = this.props.schema.name;
+        }
 
         if (typeof name === 'string') {
             return (
@@ -1351,15 +1366,6 @@ export class SchemaAdminSettings extends React.PureComponent<SchemaAdminSettings
                 {this.renderTitle()}
                 <div className='admin-console__wrapper'>
                     <div className='admin-console__content'>
-                        {this.props.plugin && (
-                            <PluginMetadataPanel
-                                id={this.props.plugin.id}
-                                version={this.props.plugin.version}
-                                homepageUrl={this.props.plugin.homepage_url}
-                                releaseNotesUrl={this.props.plugin.release_notes_url}
-                                variant='settings'
-                            />
-                        )}
                         <form
                             className='form-horizontal'
                             role='form'

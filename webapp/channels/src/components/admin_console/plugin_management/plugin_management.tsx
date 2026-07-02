@@ -436,15 +436,12 @@ const PluginItem = ({
 
     return (
         <div data-testid={pluginStatus.id}>
-            <div>
-                <strong>{pluginStatus.name}</strong>
-            </div>
             <PluginMetadataPanel
+                name={pluginStatus.name}
                 id={pluginStatus.id}
                 version={pluginStatus.version}
                 homepageUrl={plugin?.homepage_url}
                 releaseNotesUrl={plugin?.release_notes_url}
-                variant='management'
             />
             {description}
             <div className='pt-2'>
