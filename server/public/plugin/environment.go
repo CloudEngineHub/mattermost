@@ -491,6 +491,11 @@ func (env *Environment) Shutdown() {
 			return true
 		}
 
+		// Mark the plugin as not running immediately, before OnDeactivate even starts, so
+		// RunMultiPluginHook* rejects new dispatches to it right away instead of waiting for
+		// every plugin's teardown to finish.
+		env.setPluginState(rp.BundleInfo.Manifest.Id, model.PluginStateNotRunning)
+
 		wg.Add(1)
 
 		done := make(chan bool)
