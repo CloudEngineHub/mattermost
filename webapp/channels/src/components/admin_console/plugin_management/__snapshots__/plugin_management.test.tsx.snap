@@ -4203,33 +4203,37 @@ exports[`components/PluginManagement should match snapshot, with installed plugi
                         <strong>
                           Plugin 0
                         </strong>
-                         (
                         <span
-                          class="PluginMetadataPanel__idWrapper"
+                          class="PluginMetadataPanel__metadata"
                         >
-                          <code
-                            class="PluginMetadataPanel__id"
-                            data-testid="plugin-metadata-id"
-                          >
-                            plugin_0
-                          </code>
+                           (
                           <span
-                            aria-label="Copy text"
-                            class="post-code__clipboard PluginMetadataPanel__copy"
-                            role="button"
+                            class="PluginMetadataPanel__idWrapper"
                           >
-                            <i
-                              class="icon icon-content-copy"
-                            />
+                            <span
+                              class="PluginMetadataPanel__id"
+                              data-testid="plugin-metadata-id"
+                            >
+                              plugin_0
+                            </span>
+                            <span
+                              aria-label="Copy text"
+                              class="post-code__clipboard PluginMetadataPanel__copy"
+                              role="button"
+                            >
+                              <i
+                                class="icon icon-content-copy"
+                              />
+                            </span>
                           </span>
+                           - 
+                          <span
+                            data-testid="plugin-metadata-version"
+                          >
+                            v0.1.0
+                          </span>
+                          )
                         </span>
-                         - 
-                        <span
-                          data-testid="plugin-metadata-version"
-                        >
-                          v0.1.0
-                        </span>
-                        )
                       </span>
                       <div
                         class="pt-2"
@@ -4335,33 +4339,37 @@ exports[`components/PluginManagement should match snapshot, with installed plugi
                         <strong>
                           Plugin 1
                         </strong>
-                         (
                         <span
-                          class="PluginMetadataPanel__idWrapper"
+                          class="PluginMetadataPanel__metadata"
                         >
-                          <code
-                            class="PluginMetadataPanel__id"
-                            data-testid="plugin-metadata-id"
-                          >
-                            plugin_1
-                          </code>
+                           (
                           <span
-                            aria-label="Copy text"
-                            class="post-code__clipboard PluginMetadataPanel__copy"
-                            role="button"
+                            class="PluginMetadataPanel__idWrapper"
                           >
-                            <i
-                              class="icon icon-content-copy"
-                            />
+                            <span
+                              class="PluginMetadataPanel__id"
+                              data-testid="plugin-metadata-id"
+                            >
+                              plugin_1
+                            </span>
+                            <span
+                              aria-label="Copy text"
+                              class="post-code__clipboard PluginMetadataPanel__copy"
+                              role="button"
+                            >
+                              <i
+                                class="icon icon-content-copy"
+                              />
+                            </span>
                           </span>
+                           - 
+                          <span
+                            data-testid="plugin-metadata-version"
+                          >
+                            v0.0.1
+                          </span>
+                          )
                         </span>
-                         - 
-                        <span
-                          data-testid="plugin-metadata-version"
-                        >
-                          v0.0.1
-                        </span>
-                        )
                       </span>
                       <div
                         class="pt-2"
@@ -4911,33 +4919,37 @@ exports[`components/PluginManagement should match snapshot, with installed plugi
                         <strong>
                           Plugin 0
                         </strong>
-                         (
                         <span
-                          class="PluginMetadataPanel__idWrapper"
+                          class="PluginMetadataPanel__metadata"
                         >
-                          <code
-                            class="PluginMetadataPanel__id"
-                            data-testid="plugin-metadata-id"
-                          >
-                            plugin_0
-                          </code>
+                           (
                           <span
-                            aria-label="Copy text"
-                            class="post-code__clipboard PluginMetadataPanel__copy"
-                            role="button"
+                            class="PluginMetadataPanel__idWrapper"
                           >
-                            <i
-                              class="icon icon-content-copy"
-                            />
+                            <span
+                              class="PluginMetadataPanel__id"
+                              data-testid="plugin-metadata-id"
+                            >
+                              plugin_0
+                            </span>
+                            <span
+                              aria-label="Copy text"
+                              class="post-code__clipboard PluginMetadataPanel__copy"
+                              role="button"
+                            >
+                              <i
+                                class="icon icon-content-copy"
+                              />
+                            </span>
                           </span>
+                           - 
+                          <span
+                            data-testid="plugin-metadata-version"
+                          >
+                            v0.1.0
+                          </span>
+                          )
                         </span>
-                         - 
-                        <span
-                          data-testid="plugin-metadata-version"
-                        >
-                          v0.1.0
-                        </span>
-                        )
                       </span>
                       <div
                         class="pt-2"
@@ -5411,33 +5423,37 @@ exports[`components/PluginManagement should match snapshot, with installed plugi
                         <strong>
                           Plugin 0
                         </strong>
-                         (
                         <span
-                          class="PluginMetadataPanel__idWrapper"
+                          class="PluginMetadataPanel__metadata"
                         >
-                          <code
-                            class="PluginMetadataPanel__id"
-                            data-testid="plugin-metadata-id"
-                          >
-                            plugin_0
-                          </code>
+                           (
                           <span
-                            aria-label="Copy text"
-                            class="post-code__clipboard PluginMetadataPanel__copy"
-                            role="button"
+                            class="PluginMetadataPanel__idWrapper"
                           >
-                            <i
-                              class="icon icon-content-copy"
-                            />
+                            <span
+                              class="PluginMetadataPanel__id"
+                              data-testid="plugin-metadata-id"
+                            >
+                              plugin_0
+                            </span>
+                            <span
+                              aria-label="Copy text"
+                              class="post-code__clipboard PluginMetadataPanel__copy"
+                              role="button"
+                            >
+                              <i
+                                class="icon icon-content-copy"
+                              />
+                            </span>
                           </span>
+                           - 
+                          <span
+                            data-testid="plugin-metadata-version"
+                          >
+                            v0.1.0
+                          </span>
+                          )
                         </span>
-                         - 
-                        <span
-                          data-testid="plugin-metadata-version"
-                        >
-                          v0.1.0
-                        </span>
-                        )
                       </span>
                       <div
                         class="pt-2"
@@ -5911,33 +5927,37 @@ exports[`components/PluginManagement should match snapshot, with installed plugi
                         <strong>
                           Plugin 0
                         </strong>
-                         (
                         <span
-                          class="PluginMetadataPanel__idWrapper"
+                          class="PluginMetadataPanel__metadata"
                         >
-                          <code
-                            class="PluginMetadataPanel__id"
-                            data-testid="plugin-metadata-id"
-                          >
-                            plugin_0
-                          </code>
+                           (
                           <span
-                            aria-label="Copy text"
-                            class="post-code__clipboard PluginMetadataPanel__copy"
-                            role="button"
+                            class="PluginMetadataPanel__idWrapper"
                           >
-                            <i
-                              class="icon icon-content-copy"
-                            />
+                            <span
+                              class="PluginMetadataPanel__id"
+                              data-testid="plugin-metadata-id"
+                            >
+                              plugin_0
+                            </span>
+                            <span
+                              aria-label="Copy text"
+                              class="post-code__clipboard PluginMetadataPanel__copy"
+                              role="button"
+                            >
+                              <i
+                                class="icon icon-content-copy"
+                              />
+                            </span>
                           </span>
+                           - 
+                          <span
+                            data-testid="plugin-metadata-version"
+                          >
+                            v0.1.0
+                          </span>
+                          )
                         </span>
-                         - 
-                        <span
-                          data-testid="plugin-metadata-version"
-                        >
-                          v0.1.0
-                        </span>
-                        )
                       </span>
                       <div
                         class="pt-2"
@@ -6411,33 +6431,37 @@ exports[`components/PluginManagement should match snapshot, with installed plugi
                         <strong>
                           Plugin 0
                         </strong>
-                         (
                         <span
-                          class="PluginMetadataPanel__idWrapper"
+                          class="PluginMetadataPanel__metadata"
                         >
-                          <code
-                            class="PluginMetadataPanel__id"
-                            data-testid="plugin-metadata-id"
-                          >
-                            plugin_0
-                          </code>
+                           (
                           <span
-                            aria-label="Copy text"
-                            class="post-code__clipboard PluginMetadataPanel__copy"
-                            role="button"
+                            class="PluginMetadataPanel__idWrapper"
                           >
-                            <i
-                              class="icon icon-content-copy"
-                            />
+                            <span
+                              class="PluginMetadataPanel__id"
+                              data-testid="plugin-metadata-id"
+                            >
+                              plugin_0
+                            </span>
+                            <span
+                              aria-label="Copy text"
+                              class="post-code__clipboard PluginMetadataPanel__copy"
+                              role="button"
+                            >
+                              <i
+                                class="icon icon-content-copy"
+                              />
+                            </span>
                           </span>
+                           - 
+                          <span
+                            data-testid="plugin-metadata-version"
+                          >
+                            v0.1.0
+                          </span>
+                          )
                         </span>
-                         - 
-                        <span
-                          data-testid="plugin-metadata-version"
-                        >
-                          v0.1.0
-                        </span>
-                        )
                       </span>
                       <div
                         class="pt-2"
@@ -6535,33 +6559,37 @@ exports[`components/PluginManagement should match snapshot, with installed plugi
                         <strong>
                           Plugin 1
                         </strong>
-                         (
                         <span
-                          class="PluginMetadataPanel__idWrapper"
+                          class="PluginMetadataPanel__metadata"
                         >
-                          <code
-                            class="PluginMetadataPanel__id"
-                            data-testid="plugin-metadata-id"
-                          >
-                            plugin_1
-                          </code>
+                           (
                           <span
-                            aria-label="Copy text"
-                            class="post-code__clipboard PluginMetadataPanel__copy"
-                            role="button"
+                            class="PluginMetadataPanel__idWrapper"
                           >
-                            <i
-                              class="icon icon-content-copy"
-                            />
+                            <span
+                              class="PluginMetadataPanel__id"
+                              data-testid="plugin-metadata-id"
+                            >
+                              plugin_1
+                            </span>
+                            <span
+                              aria-label="Copy text"
+                              class="post-code__clipboard PluginMetadataPanel__copy"
+                              role="button"
+                            >
+                              <i
+                                class="icon icon-content-copy"
+                              />
+                            </span>
                           </span>
+                           - 
+                          <span
+                            data-testid="plugin-metadata-version"
+                          >
+                            v0.0.1
+                          </span>
+                          )
                         </span>
-                         - 
-                        <span
-                          data-testid="plugin-metadata-version"
-                        >
-                          v0.0.1
-                        </span>
-                        )
                       </span>
                       <div
                         class="pt-2"
