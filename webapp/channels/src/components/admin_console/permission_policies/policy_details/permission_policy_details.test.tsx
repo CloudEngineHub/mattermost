@@ -46,6 +46,7 @@ describe('components/admin_console/permission_policies/policy_details/Permission
         EnableUserManagedAttributes: false,
         TrustProxyDeviceIdentityHeader: false,
         EnforceDeviceIDConsistency: false,
+        EnableAccessControlAuditLogging: false,
     };
 
     const baseProps = {
