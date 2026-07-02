@@ -9,6 +9,7 @@ import {Link} from 'react-router-dom';
 import {WithTooltip} from '@mattermost/shared/components/tooltip';
 import type {CloudState} from '@mattermost/types/cloud';
 import type {AdminConfig, ClientLicense, EnvironmentConfig} from '@mattermost/types/config';
+import type {PluginRedux} from '@mattermost/types/plugins';
 import type {Role} from '@mattermost/types/roles';
 import type {DeepPartial} from '@mattermost/types/utilities';
 
@@ -40,6 +41,7 @@ import * as I18n from 'i18n/i18n';
 import Constants from 'utils/constants';
 import {mappingValueFromRoles, rolesFromMapping} from 'utils/policy_roles_adapter';
 
+import PluginMetadataPanel from './plugin_metadata_panel/plugin_metadata_panel';
 import Setting from './setting';
 import type {AdminDefinitionConfigSchemaSection, AdminDefinitionSetting, AdminDefinitionSettingBanner, AdminDefinitionSettingDropdownOption, AdminDefinitionSubSectionSchema, ConsoleAccess} from './types';
 
@@ -80,6 +82,7 @@ export type SchemaAdminSettingsProps = {
     cloud: CloudState;
     isCurrentUserSystemAdmin: boolean;
     enterpriseReady: boolean;
+    plugin?: PluginRedux;
 } & WrappedComponentProps;
 
 type State = {
@@ -1348,6 +1351,15 @@ export class SchemaAdminSettings extends React.PureComponent<SchemaAdminSettings
                 {this.renderTitle()}
                 <div className='admin-console__wrapper'>
                     <div className='admin-console__content'>
+                        {this.props.plugin && (
+                            <PluginMetadataPanel
+                                id={this.props.plugin.id}
+                                version={this.props.plugin.version}
+                                homepageUrl={this.props.plugin.homepage_url}
+                                releaseNotesUrl={this.props.plugin.release_notes_url}
+                                variant='settings'
+                            />
+                        )}
                         <form
                             className='form-horizontal'
                             role='form'

@@ -1,0 +1,42 @@
+.PluginMetadataPanel {
+    font-size: 13px;
+    line-height: 20px;
+
+    &__row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 4px;
+    }
+
+    &__label {
+        flex-shrink: 0;
+        min-width: 80px;
+        color: rgba(var(--center-channel-color-rgb), 0.64);
+    }
+
+    &__value {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        min-width: 0;
+    }
+
+    &__id {
+        font-family: 'Open Sans', sans-serif;
+        word-break: break-all;
+    }
+
+    &__links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 8px;
+    }
+
+    &--settings {
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid rgba(var(--center-channel-color-rgb), 0.08);
+    }
+}

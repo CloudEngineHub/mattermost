@@ -203,6 +203,7 @@ function makeMapStateToProps() {
         return {
             schema: getPluginSchema(state, pluginId),
             roles: getRoles(state),
+            plugin: state.entities.admin.plugins?.[pluginId],
         };
     };
 }

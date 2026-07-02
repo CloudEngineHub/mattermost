@@ -22,6 +22,7 @@ import {DeveloperLinks} from 'utils/constants';
 import * as Utils from 'utils/utils';
 
 import BooleanSetting from '../boolean_setting';
+import PluginMetadataPanel from '../plugin_metadata_panel/plugin_metadata_panel';
 import OLDAdminSettings from '../old_admin_settings';
 import type {BaseProps, BaseState} from '../old_admin_settings';
 import SettingSet from '../setting_set';
@@ -178,6 +179,10 @@ type PluginStatus = {
 
 type PluginItemProps = {
     pluginStatus: PluginStatus;
+    plugin?: {
+        homepage_url?: string;
+        release_notes_url?: string;
+    };
     removing: boolean;
     handleEnable: (e: any) => any;
     handleDisable: (e: any) => any;
@@ -228,6 +233,7 @@ export const searchableStrings = [
 
 const PluginItem = ({
     pluginStatus,
+    plugin,
     removing,
     handleEnable,
     handleDisable,
@@ -432,12 +438,14 @@ const PluginItem = ({
         <div data-testid={pluginStatus.id}>
             <div>
                 <strong>{pluginStatus.name}</strong>
-                {' ('}
-                {pluginStatus.id}
-                {' - '}
-                {pluginStatus.version}
-                {')'}
             </div>
+            <PluginMetadataPanel
+                id={pluginStatus.id}
+                version={pluginStatus.version}
+                homepageUrl={plugin?.homepage_url}
+                releaseNotesUrl={plugin?.release_notes_url}
+                variant='management'
+            />
             {description}
             <div className='pt-2'>
                 {activateButton}
@@ -997,6 +1005,7 @@ export class PluginManagement extends OLDAdminSettings<Props, State> {
                     <PluginItem
                         key={pluginStatus.id}
                         pluginStatus={pluginStatus}
+                        plugin={p}
                         removing={this.state.removing === pluginStatus.id}
                         handleEnable={this.handleEnable}
                         handleDisable={this.handleDisable}

@@ -82,6 +82,11 @@ describe('custom plugin sections and settings', () => {
         },
     };
 
+    const expectPluginPageTitle = (pluginName: string) => {
+        expect(screen.getByTestId('plugin-metadata-panel')).toBeInTheDocument();
+        expect(document.querySelector('.admin-console__header')).toHaveTextContent(pluginName);
+    };
+
     it('empty sections and settings', () => {
         renderWithContext(
             <CustomPluginSettings
@@ -90,7 +95,7 @@ describe('custom plugin sections and settings', () => {
             />,
             {...baseState});
 
-        expect(screen.getByText('testplugin')).toBeInTheDocument();
+        expectPluginPageTitle('testplugin');
         expect(screen.getByTestId('PluginSettings.PluginStates.testplugin.Enable')).toBeInTheDocument();
         expect(screen.getByText('This is the header')).toBeInTheDocument();
         expect(screen.getByText('This is the footer')).toBeInTheDocument();
@@ -160,7 +165,7 @@ describe('custom plugin sections and settings', () => {
             />,
             {...state});
 
-        expect(screen.getByText('testplugin')).toBeInTheDocument();
+        expectPluginPageTitle('testplugin');
         expect(screen.getByTestId('PluginSettings.PluginStates.testplugin.Enable')).toBeInTheDocument();
         expect(screen.getByText('In order to view and configure plugin settings, enable the plugin and click Save.')).toBeInTheDocument();
         expect(screen.queryByText('Custom Section 1')).not.toBeInTheDocument();
@@ -239,7 +244,7 @@ describe('custom plugin sections and settings', () => {
             />,
             {...state});
 
-        expect(screen.getByText('testplugin')).toBeInTheDocument();
+        expectPluginPageTitle('testplugin');
         expect(screen.getByTestId('PluginSettings.PluginStates.testplugin.Enable')).toBeInTheDocument();
         expect(screen.queryByText('In order to view and configure plugin settings, enable the plugin and click Save.')).not.toBeInTheDocument();
         expect(screen.queryByText('Custom Section 1')).toBeInTheDocument();
@@ -342,7 +347,7 @@ describe('custom plugin sections and settings', () => {
             />,
             {...state});
 
-        expect(screen.getByText('testplugin')).toBeInTheDocument();
+        expectPluginPageTitle('testplugin');
         expect(screen.getByTestId('PluginSettings.PluginStates.testplugin.Enable')).toBeInTheDocument();
         expect(screen.queryByText('In order to view and configure plugin settings, enable the plugin and click Save.')).not.toBeInTheDocument();
         expect(screen.getByText('Custom Component Section 1')).toBeInTheDocument();
