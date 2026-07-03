@@ -846,6 +846,8 @@ func (a *App) RotateUserAccessToken(rctx request.CTX, token *model.UserAccessTok
 	}
 
 	if !user.IsBot {
+		// Validate against the proposed expiry using a throwaway copy so token
+		// isn't mutated unless the rotation actually succeeds.
 		rotated := &model.UserAccessToken{
 			Id:        token.Id,
 			UserId:    token.UserId,
