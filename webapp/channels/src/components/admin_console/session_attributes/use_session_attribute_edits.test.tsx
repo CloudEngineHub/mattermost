@@ -3,8 +3,8 @@
 
 import {act} from '@testing-library/react';
 
-import {SESSION_ATTRIBUTES_GROUP_ID, SESSION_ATTRIBUTES_OBJECT_TYPE} from '@mattermost/types/properties';
-import type {UserPropertyField} from '@mattermost/types/properties';
+import {SESSION_ATTRIBUTES_GROUP_ID, SESSION_ATTRIBUTES_OBJECT_TYPE} from '@mattermost/types/properties_user';
+import type {UserPropertyField} from '@mattermost/types/properties_user';
 
 import {Client4} from 'mattermost-redux/client';
 

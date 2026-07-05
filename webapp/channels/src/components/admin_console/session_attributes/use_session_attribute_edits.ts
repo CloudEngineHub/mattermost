@@ -4,7 +4,7 @@
 import {useCallback, useMemo, useState} from 'react';
 import {useDispatch} from 'react-redux';
 
-import {SESSION_ATTRIBUTES_GROUP_ID, SESSION_ATTRIBUTES_OBJECT_TYPE} from '@mattermost/types/properties';
+import {SESSION_ATTRIBUTES_GROUP_ID, SESSION_ATTRIBUTES_OBJECT_TYPE} from '@mattermost/types/properties_user';
 
 import {patchSessionAttributeField} from 'mattermost-redux/actions/properties';
 

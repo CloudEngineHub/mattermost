@@ -15,6 +15,7 @@ import MobileSecurity from '@/ui/components/system_console/sections/environment/
 import Localization from '@/ui/components/system_console/sections/site_configuration/localization';
 import Notifications from '@/ui/components/system_console/sections/site_configuration/notifications';
 import UsersAndTeams from '@/ui/components/system_console/sections/site_configuration/users_and_teams';
+import BoardAttributes from '@/ui/components/system_console/sections/system_attributes/board_attributes';
 import SystemProperties from '@/ui/components/system_console/sections/system_attributes/system_properties';
 import SessionAttributes from '@/ui/components/system_console/sections/system_attributes/session_attributes';
 import FeatureDiscovery from '@/ui/components/system_console/sections/system_users/feature_discovery';
@@ -49,6 +50,7 @@ export default class SystemConsolePage {
     // System Attributes
     readonly systemProperties: SystemProperties;
     readonly sessionAttributes: SessionAttributes;
+    readonly boardAttributes: BoardAttributes;
 
     // Feature Discovery (license-gated features)
     readonly featureDiscovery: FeatureDiscovery;
@@ -85,6 +87,7 @@ export default class SystemConsolePage {
         // System Attributes
         this.systemProperties = new SystemProperties(adminConsoleWrapper);
         this.sessionAttributes = new SessionAttributes(adminConsoleWrapper);
+        this.boardAttributes = new BoardAttributes(adminConsoleWrapper);
 
         // Feature Discovery
         this.featureDiscovery = new FeatureDiscovery(adminConsoleWrapper);

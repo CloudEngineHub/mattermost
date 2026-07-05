@@ -18,7 +18,7 @@ import type {Group, GroupMember} from '@mattermost/types/groups';
 import type {OpenDialogRequest} from '@mattermost/types/integrations';
 import type {Post, PostAcknowledgement} from '@mattermost/types/posts';
 import type {PreferenceType} from '@mattermost/types/preferences';
-import {SESSION_ATTRIBUTES_OBJECT_TYPE} from '@mattermost/types/properties';
+import {SESSION_ATTRIBUTES_OBJECT_TYPE} from '@mattermost/types/properties_user';
 import type {Reaction} from '@mattermost/types/reactions';
 import type {Role} from '@mattermost/types/roles';
 import type {ScheduledPost} from '@mattermost/types/schedule_post';
@@ -560,6 +560,10 @@ export function handleEvent(msg: WebSocketMessage) {
         dispatch(handleChannelAccessControlUpdatedEvent(msg));
         break;
 
+    case WebSocketEvents.TeamAccessControlUpdated:
+        dispatch(handleTeamAccessControlUpdatedEvent(msg));
+        break;
+
     case WebSocketEvents.DirectAdded:
         dispatch(handleDirectAddedEvent(msg));
         break;
@@ -675,8 +679,8 @@ export function handleEvent(msg: WebSocketMessage) {
         dispatch(
             handlePropertyFieldCreatedOrUpdated(
                 msg as
-                    | WebSocketMessages.PropertyFieldCreated
-                    | WebSocketMessages.PropertyFieldUpdated,
+                    WebSocketMessages.PropertyFieldCreated |
+                    WebSocketMessages.PropertyFieldUpdated,
             ),
         );
         break;
@@ -880,6 +884,20 @@ export function handleChannelAccessControlUpdatedEvent(msg: WebSocketMessages.Ch
         // consumers (e.g. the channel invite modal banner) refetch the
         // latest attribute set after a policy change.
         invalidateAccessControlAttributesCache(EntityType.Channel, channel.id);
+    };
+}
+
+export function handleTeamAccessControlUpdatedEvent(msg: WebSocketMessages.TeamAccessControlUpdated): ThunkActionFunc<void> {
+    return (doDispatch) => {
+        if (!msg.data.team) {
+            return;
+        }
+
+        const team = JSON.parse(msg.data.team) as Team;
+
+        // Refresh the team record so consumers see the latest policy_enforced
+        // flag (and any other access-control-derived fields).
+        doDispatch({type: TeamTypes.RECEIVED_TEAM, data: team});
     };
 }
 
@@ -1322,8 +1340,8 @@ export function handleUserAddedEvent(msg: WebSocketMessages.UserAddedToChannel):
 
 function handlePropertyFieldCreatedOrUpdated(
     msg:
-    | WebSocketMessages.PropertyFieldCreated
-    | WebSocketMessages.PropertyFieldUpdated,
+    | WebSocketMessages.PropertyFieldCreated |
+    WebSocketMessages.PropertyFieldUpdated,
 ): ThunkActionFunc<void> {
     return (doDispatch) => {
         let field;

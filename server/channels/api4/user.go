@@ -90,6 +90,8 @@ func (api *API) InitUser() {
 	api.BaseRoutes.User.Handle("/tokens", api.APISessionRequired(getUserAccessTokensForUser)).Methods(http.MethodGet)
 	api.BaseRoutes.Users.Handle("/tokens", api.APISessionRequired(getUserAccessTokens)).Methods(http.MethodGet)
 	api.BaseRoutes.Users.Handle("/tokens/search", api.APISessionRequired(searchUserAccessTokens)).Methods(http.MethodPost)
+	api.BaseRoutes.Users.Handle("/tokens/non_compliant/count", api.APISessionRequired(countNonCompliantUserAccessTokens)).Methods(http.MethodGet)
+	api.BaseRoutes.Users.Handle("/tokens/non_compliant/revoke", api.APISessionRequired(revokeNonCompliantUserAccessTokens)).Methods(http.MethodPost)
 	api.BaseRoutes.Users.Handle("/tokens/{token_id:[A-Za-z0-9]+}", api.APISessionRequired(getUserAccessToken)).Methods(http.MethodGet)
 	api.BaseRoutes.Users.Handle("/tokens/revoke", api.APISessionRequired(revokeUserAccessToken)).Methods(http.MethodPost)
 	api.BaseRoutes.Users.Handle("/tokens/disable", api.APISessionRequired(disableUserAccessToken)).Methods(http.MethodPost)
@@ -1041,12 +1043,33 @@ func getUsers(c *Context, w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		etag = c.App.GetUsersNotInTeamEtag(inTeamId, restrictions.Hash())
-		if c.HandleEtag(etag, "Get Users Not in Team", w, r) {
-			return
+		// On a policy-governed team, abac_match_only=true narrows the candidates to
+		// users who satisfy the membership policy so callers like the invite modal
+		// never surface a non-qualifying user. Without the flag the listing is
+		// unchanged. Surface TeamAccessControlled errors rather than silently
+		// falling through to the unfiltered path.
+		abacMatchOnly, _ := strconv.ParseBool(r.URL.Query().Get("abac_match_only"))
+		useAbacFilter := false
+		if abacMatchOnly {
+			enforced, enforcedErr := c.App.TeamAccessControlled(c.AppContext, notInTeamId)
+			if enforcedErr != nil {
+				c.Err = enforcedErr
+				return
+			}
+			useAbacFilter = enforced
 		}
 
-		profiles, appErr = c.App.GetUsersNotInTeamPage(notInTeamId, groupConstrainedBool, c.Params.Page, c.Params.PerPage, c.IsSystemAdmin(), restrictions)
+		if useAbacFilter {
+			cursorId := r.URL.Query().Get("cursor_id")
+			profiles, appErr = c.App.GetUsersNotInAbacTeam(c.AppContext, notInTeamId, cursorId, c.Params.PerPage, c.IsSystemAdmin())
+		} else {
+			etag = c.App.GetUsersNotInTeamEtag(inTeamId, restrictions.Hash())
+			if c.HandleEtag(etag, "Get Users Not in Team", w, r) {
+				return
+			}
+
+			profiles, appErr = c.App.GetUsersNotInTeamPage(notInTeamId, groupConstrainedBool, c.Params.Page, c.Params.PerPage, c.IsSystemAdmin(), restrictions)
+		}
 	} else if inTeamId != "" {
 		if !c.App.SessionHasPermissionToTeam(*c.AppContext.Session(), inTeamId, model.PermissionViewTeam) {
 			c.SetPermissionError(model.PermissionViewTeam)
@@ -2628,7 +2651,7 @@ func revokeAllSessionsAllUsers(c *Context, w http.ResponseWriter, r *http.Reques
 	auditRec := c.MakeAuditRecord(model.AuditEventRevokeAllSessionsAllUsers, model.AuditStatusFail)
 	defer c.LogAuditRec(auditRec)
 
-	if err := c.App.RevokeSessionsFromAllUsers(); err != nil {
+	if err := c.App.RevokeSessionsFromAllUsers(c.AppContext); err != nil {
 		c.Err = err
 		return
 	}
@@ -3041,6 +3064,58 @@ func getUserAccessTokens(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func countNonCompliantUserAccessTokens(c *Context, w http.ResponseWriter, r *http.Request) {
+	if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionManageSystem) {
+		c.SetPermissionError(model.PermissionManageSystem)
+		return
+	}
+
+	count, appErr := c.App.CountNonCompliantUserAccessTokens()
+	if appErr != nil {
+		c.Err = appErr
+		return
+	}
+
+	js, err := json.Marshal(model.NonCompliantUserAccessTokenResult{Count: count})
+	if err != nil {
+		c.Err = model.NewAppError("countNonCompliantUserAccessTokens", "api.marshal_error", nil, "", http.StatusInternalServerError).Wrap(err)
+		return
+	}
+
+	if _, err := w.Write(js); err != nil {
+		c.Logger.Warn("Error while writing response", mlog.Err(err))
+	}
+}
+
+func revokeNonCompliantUserAccessTokens(c *Context, w http.ResponseWriter, r *http.Request) {
+	auditRec := c.MakeAuditRecord(model.AuditEventRevokeNonCompliantUserAccessTokens, model.AuditStatusFail)
+	defer c.LogAuditRec(auditRec)
+
+	if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionManageSystem) {
+		c.SetPermissionError(model.PermissionManageSystem)
+		return
+	}
+
+	count, appErr := c.App.RevokeNonCompliantUserAccessTokens(c.AppContext)
+	if appErr != nil {
+		c.Err = appErr
+		return
+	}
+
+	model.AddEventParameterToAuditRec(auditRec, "revoked_count", count)
+	auditRec.Success()
+
+	js, err := json.Marshal(model.NonCompliantUserAccessTokenResult{Count: count})
+	if err != nil {
+		c.Err = model.NewAppError("revokeNonCompliantUserAccessTokens", "api.marshal_error", nil, "", http.StatusInternalServerError).Wrap(err)
+		return
+	}
+
+	if _, err := w.Write(js); err != nil {
+		c.Logger.Warn("Error while writing response", mlog.Err(err))
+	}
+}
+
 func getUserAccessTokensForUser(c *Context, w http.ResponseWriter, r *http.Request) {
 	c.RequireUserId()
 	if c.Err != nil {
@@ -3114,6 +3189,12 @@ func revokeUserAccessToken(c *Context, w http.ResponseWriter, r *http.Request) {
 	model.AddEventParameterToAuditRec(auditRec, "token_id", tokenId)
 	c.LogAudit("")
 
+	if c.AppContext.Session().IsOAuth {
+		c.SetPermissionError(model.PermissionRevokeUserAccessToken)
+		c.Err.DetailedError += ", attempted access by oauth app"
+		return
+	}
+
 	if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionRevokeUserAccessToken) {
 		c.SetPermissionError(model.PermissionRevokeUserAccessToken)
 		return
@@ -3157,6 +3238,12 @@ func disableUserAccessToken(c *Context, w http.ResponseWriter, r *http.Request) 
 	model.AddEventParameterToAuditRec(auditRec, "token_id", tokenId)
 	defer c.LogAuditRec(auditRec)
 	c.LogAudit("")
+
+	if c.AppContext.Session().IsOAuth {
+		c.SetPermissionError(model.PermissionRevokeUserAccessToken)
+		c.Err.DetailedError += ", attempted access by oauth app"
+		return
+	}
 
 	// No separate permission for this action for now
 	if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionRevokeUserAccessToken) {
@@ -3202,6 +3289,12 @@ func enableUserAccessToken(c *Context, w http.ResponseWriter, r *http.Request) {
 	defer c.LogAuditRec(auditRec)
 	model.AddEventParameterToAuditRec(auditRec, "token_id", tokenId)
 	c.LogAudit("")
+
+	if c.AppContext.Session().IsOAuth {
+		c.SetPermissionError(model.PermissionCreateUserAccessToken)
+		c.Err.DetailedError += ", attempted access by oauth app"
+		return
+	}
 
 	// No separate permission for this action for now
 	if !c.App.SessionHasPermissionTo(*c.AppContext.Session(), model.PermissionCreateUserAccessToken) {

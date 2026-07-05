@@ -3,7 +3,7 @@
 
 import React from 'react';
 
-import type {UserPropertyField} from '@mattermost/types/properties';
+import type {UserPropertyField} from '@mattermost/types/properties_user';
 
 import ModalController from 'components/modal_controller';
 

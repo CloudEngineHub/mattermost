@@ -6,7 +6,7 @@ import React, {useCallback, useEffect, useRef, useState, useMemo} from 'react';
 import {FormattedMessage, useIntl} from 'react-intl';
 
 import type {AccessControlTestResult} from '@mattermost/types/access_control';
-import {SESSION_ATTRIBUTES_OBJECT_TYPE} from '@mattermost/types/properties';
+import {SESSION_ATTRIBUTES_OBJECT_TYPE} from '@mattermost/types/properties_user';
 
 import {searchUsersForExpression} from 'mattermost-redux/actions/access_control';
 import {debounce} from 'mattermost-redux/actions/helpers';

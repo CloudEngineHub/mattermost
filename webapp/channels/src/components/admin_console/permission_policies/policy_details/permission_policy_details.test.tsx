@@ -3,7 +3,8 @@
 
 import React from 'react';
 
-import type {UserPropertyField} from '@mattermost/types/properties';
+import type {AccessControlSettings} from '@mattermost/types/config';
+import type {UserPropertyField} from '@mattermost/types/properties_user';
 
 import {useChannelAccessControlActions} from 'hooks/useChannelAccessControlActions';
 import {useEnabledSessionAttributeFields} from 'hooks/useEnabledSessionAttributeFields';
@@ -15,13 +16,20 @@ import CELEditor from '../../access_control/editors/cel_editor/editor';
 import TableEditor from '../../access_control/editors/table_editor/table_editor';
 
 jest.mock('utils/browser_history', () => ({
-    getHistory: () => ({push: jest.fn()}),
+    getHistory: () => ({
+        push: jest.fn(),
+    }),
 }));
 
 jest.mock('hooks/useEnabledSessionAttributeFields', () => ({
     useEnabledSessionAttributeFields: jest.fn(() => []),
 }));
 
+// Render the editors as identifiable stand-ins. The real CELEditor boots
+// Monaco (unavailable in JSDOM) and the real TableEditor parses CEL via an
+// async action, neither of which is relevant here: these tests assert which
+// editor the parent chooses on load. The shared isSimpleExpression helper is
+// intentionally left unmocked so the real classification runs.
 jest.mock('../../access_control/editors/table_editor/table_editor', () => {
     const reactLib = require('react');
     return jest.fn(() => reactLib.createElement('div', {'data-testid': 'table-editor'}));
@@ -65,36 +73,48 @@ const makeSessionField = (id: string, name: string): UserPropertyField => ({
 });
 
 describe('components/admin_console/permission_policies/policy_details/PermissionPolicyDetails', () => {
+    const mockFetchPolicy = jest.fn();
     const mockGetAccessControlFields = jest.fn();
 
+    const accessControlSettings: AccessControlSettings = {
+        EnableAttributeBasedAccessControl: true,
+        EnableUserManagedAttributes: false,
+        TrustProxyDeviceIdentityHeader: false,
+        EnforceDeviceIDConsistency: false,
+    };
+
     const baseProps = {
-        accessControlSettings: {
-            EnableAttributeBasedAccessControl: true,
-            EnableUserManagedAttributes: false,
-            TrustProxyDeviceIdentityHeader: false,
-            EnforceDeviceIDConsistency: false,
-        },
+        policyId: 'policy1',
+        accessControlSettings,
         sessionAttributesEnabled: true,
         actions: {
-            fetchPolicy: jest.fn().mockResolvedValue({data: {}}),
-            createPolicy: jest.fn().mockResolvedValue({data: {}}),
-            deletePolicy: jest.fn().mockResolvedValue({data: {}}),
+            fetchPolicy: mockFetchPolicy,
+            createPolicy: jest.fn(),
+            deletePolicy: jest.fn(),
             setNavigationBlocked: jest.fn(),
         },
     };
 
-    beforeEach(() => {
-        // The CEL autocomplete endpoint returns only user/CPA attributes; session
-        // attributes arrive separately via useEnabledSessionAttributeFields.
-        mockGetAccessControlFields.mockResolvedValue({
-            data: [
-                {id: 'u1', name: 'department', group_id: 'cpa9q4w7m2x5c8v1b6n3k0jr5h', object_type: 'user', attrs: {managed: 'admin'}},
-            ],
+    const renderWithExpression = (expression: string) => {
+        mockFetchPolicy.mockResolvedValue({
+            data: {
+                id: 'policy1',
+                name: 'Policy 1',
+                roles: ['system_user'],
+                rules: expression ? [{actions: ['download_file_attachment'], expression}] : [],
+            },
         });
+        return renderWithContext(<PermissionPolicyDetails {...baseProps}/>);
+    };
+
+    beforeEach(() => {
+        mockFetchPolicy.mockReset();
+        mockGetAccessControlFields.mockReset();
+
         mockUseEnabledSessionAttributeFields.mockReturnValue([makeSessionField('s1', 'network_name')]);
         mockUseChannelAccessControlActions.mockReturnValue({
             getAccessControlFields: mockGetAccessControlFields,
-            getVisualAST: jest.fn().mockResolvedValue({data: {}}),
+            getVisualAST: jest.fn(),
             searchUsers: jest.fn(),
             getChannelPolicy: jest.fn(),
             saveChannelPolicy: jest.fn(),
@@ -105,6 +125,16 @@ describe('components/admin_console/permission_policies/policy_details/Permission
             validateExpressionAgainstRequester: jest.fn(),
             simulatePolicyForUsers: jest.fn(),
             updateAccessControlPoliciesActive: jest.fn(),
+        });
+
+        // One LDAP-synced attribute keeps the editor usable so the mode toggle
+        // is enabled and reflects the loaded expression rather than the
+        // no-attributes gate.
+        mockGetAccessControlFields.mockResolvedValue({
+            data: [
+                {id: 'u1', name: 'teams', attrs: {ldap: true}},
+                {id: 'u2', name: 'department', group_id: 'cpa9q4w7m2x5c8v1b6n3k0jr5h', object_type: 'user', attrs: {managed: 'admin'}},
+            ],
         });
     });
 
@@ -164,6 +194,72 @@ describe('components/admin_console/permission_policies/policy_details/Permission
 
         const lastCall = MockedTableEditor.mock.calls[MockedTableEditor.mock.calls.length - 1][0];
         const passedNames = lastCall.userAttributes.map((attr) => attr.name);
-        expect(passedNames).toEqual(['department']);
+        expect(passedNames).toEqual(['teams', 'department']);
+    });
+
+    // MM-69527: editing an existing rule must default to Simple (table) mode
+    // for every expression the simple editor can represent. The two named
+    // cases below are the original regression: a parenthesized multiselect
+    // "has any of" OR-group and a ranked-operator condition were misclassified
+    // as complex by a stale local helper and forced the editor into Advanced
+    // mode.
+    test('opens a multiselect "has any of" group in Simple mode (MM-69527)', async () => {
+        renderWithExpression('user.attributes.department == "engineering" && ("engineering" in user.attributes.teams || "sales" in user.attributes.teams)');
+
+        expect(await screen.findByTestId('table-editor')).toBeInTheDocument();
+        expect(screen.queryByTestId('cel-editor')).not.toBeInTheDocument();
+        expect(screen.getByText('Switch to Advanced Mode')).toBeInTheDocument();
+    });
+
+    test('opens a ranked-operator rule in Simple mode (MM-69527)', async () => {
+        renderWithExpression('user.attributes.level >= "Senior"');
+
+        expect(await screen.findByTestId('table-editor')).toBeInTheDocument();
+        expect(screen.queryByTestId('cel-editor')).not.toBeInTheDocument();
+        expect(screen.getByText('Switch to Advanced Mode')).toBeInTheDocument();
+    });
+
+    describe('opens simple expressions in Simple (table) mode', () => {
+        const simpleExpressions: Array<[string, string]> = [
+            ['empty expression (new rule)', ''],
+            ['equality', 'user.attributes.teams == "engineering"'],
+            ['inequality', 'user.attributes.teams != "engineering"'],
+            ['ranked is at most (<=)', 'user.attributes.level <= "Senior"'],
+            ['ranked greater than (>)', 'user.attributes.level > "Junior"'],
+            ['ranked less than (<)', 'user.attributes.level < "Lead"'],
+            ['has all of (&&-joined "in")', '"engineering" in user.attributes.teams && "sales" in user.attributes.teams'],
+            ['attribute in list', 'user.attributes.teams in ["engineering", "sales"]'],
+            ['startsWith', 'user.attributes.email.startsWith("admin")'],
+            ['endsWith', 'user.attributes.email.endsWith("@acme.com")'],
+            ['contains', 'user.attributes.email.contains("acme")'],
+        ];
+
+        test.each(simpleExpressions)('%s', async (_label, expression) => {
+            renderWithExpression(expression);
+
+            expect(await screen.findByTestId('table-editor')).toBeInTheDocument();
+            expect(screen.queryByTestId('cel-editor')).not.toBeInTheDocument();
+        });
+    });
+
+    describe('opens complex expressions in Advanced (CEL) mode', () => {
+        const complexExpressions: Array<[string, string]> = [
+            ['top-level OR of equalities', 'user.attributes.a == "x" || user.attributes.b == "y"'],
+            ['parenthesized OR of equalities', 'user.attributes.a == "x" && (user.attributes.b == "y" || user.attributes.c == "z")'],
+        ];
+
+        test.each(complexExpressions)('%s', async (_label, expression) => {
+            renderWithExpression(expression);
+
+            expect(await screen.findByTestId('cel-editor')).toBeInTheDocument();
+            expect(screen.queryByTestId('table-editor')).not.toBeInTheDocument();
+        });
+    });
+
+    test('disables the mode toggle when a complex expression forces Advanced mode', async () => {
+        renderWithExpression('user.attributes.a == "x" || user.attributes.b == "y"');
+
+        const toggle = await screen.findByText('Switch to Simple Mode');
+        expect(toggle.closest('button')).toBeDisabled();
     });
 });
