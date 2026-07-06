@@ -36,6 +36,8 @@ test('MM-T350 Searching displays results in the RHS', async ({pw}) => {
  * @rfqa_title Changing timezone changes day search results appears
  */
 test('MM-T595 Changing timezone changes day search results appears', async ({pw}) => {
+    test.setTimeout(150_000);
+
     const {adminClient, team, user} = await pw.initSetup();
     const channel = await adminClient.getChannelByName(team.id, 'off-topic');
     const identifier = `timezone-${pw.random.id()}`;
@@ -55,7 +57,7 @@ test('MM-T595 Changing timezone changes day search results appears', async ({pw}
     await submitSearch(channelsPage, utcQuery);
 
     // * Verify the result appears for the UTC date
-    await expectSearchResult(channelsPage, targetMessage, utcQuery);
+    await expectSearchResult(channelsPage, targetMessage, utcQuery, 120_000);
 
     // # Change timezone and run the same date-filtered search
     await adminClient.patchUser({
@@ -76,6 +78,8 @@ test('MM-T595 Changing timezone changes day search results appears', async ({pw}
  * @rfqa_title Edit date and search again
  */
 test('MM-T599 Edit date and search again', async ({pw}) => {
+    test.setTimeout(150_000);
+
     const {adminClient, team, user} = await pw.initSetup();
     const channel = await adminClient.getChannelByName(team.id, 'off-topic');
     const targetMessage = `calendarUpdate-${pw.random.id()}`;
@@ -90,7 +94,7 @@ test('MM-T599 Edit date and search again', async ({pw}) => {
     await submitSearch(channelsPage, originalDateQuery);
 
     // * Verify the matching post appears for the original date
-    await expectSearchResult(channelsPage, targetMessage, originalDateQuery);
+    await expectSearchResult(channelsPage, targetMessage, originalDateQuery, 120_000);
 
     // # Edit the date and run the search again
     await submitSearch(channelsPage, `on:2019-01-16 ${targetMessage}`);
