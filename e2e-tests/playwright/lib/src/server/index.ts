@@ -2,7 +2,8 @@
 // See LICENSE.txt for license information.
 
 export {makeClient} from './client';
-export {createRandomChannel, createPublicChannel} from './channel';
+export {PlaywrightClient4} from './playwright_client';
+export {createRandomChannel} from './channel';
 export {getOnPremServerConfig, mergeWithOnPremServerConfig} from './default_config';
 export {initSetup, getAdminClient} from './init';
 export {createRandomPost} from './post';

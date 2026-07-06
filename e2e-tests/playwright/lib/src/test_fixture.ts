@@ -23,7 +23,6 @@ import {
     createMockAIAgent,
     createNewUserProfile,
     createNewTeam,
-    createPublicChannel,
     createRandomChannel,
     createRandomPost,
     createRandomTeam,
@@ -125,7 +124,6 @@ export class PlaywrightExtended {
     // ./server
     readonly createNewUserProfile;
     readonly createNewTeam;
-    readonly createPublicChannel;
     readonly isOutsideRemoteUserHour;
     readonly makeClient;
 
@@ -202,7 +200,6 @@ export class PlaywrightExtended {
         // ./server
         this.createNewUserProfile = createNewUserProfile;
         this.createNewTeam = createNewTeam;
-        this.createPublicChannel = createPublicChannel;
         this.makeClient = makeClient;
 
         // ./visual

@@ -4,29 +4,10 @@
 import type {Client4} from '@mattermost/client';
 import type {Channel} from '@mattermost/types/channels';
 import type {Post} from '@mattermost/types/posts';
-import type {Team} from '@mattermost/types/teams';
 import type {UserProfile} from '@mattermost/types/users';
 import type {Locator} from '@playwright/test';
 
-import {expect, type ChannelsPage, type PlaywrightExtended} from '@mattermost/playwright-lib';
-
-export async function createUsers(
-    pw: PlaywrightExtended,
-    adminClient: Client4,
-    team: Team,
-    count: number,
-    prefix = 'user',
-) {
-    const users: UserProfile[] = [];
-
-    for (let i = 0; i < count; i++) {
-        const user = await pw.createNewUserProfile(adminClient, {prefix});
-        await adminClient.addToTeam(team.id, user.id);
-        users.push(user);
-    }
-
-    return users;
-}
+import {expect, type ChannelsPage} from '@mattermost/playwright-lib';
 
 export async function createPost(
     adminClient: Client4,

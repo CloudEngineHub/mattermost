@@ -5,7 +5,6 @@ import {expect, test} from '@mattermost/playwright-lib';
 
 import {
     createPost,
-    createUsers,
     expectSidebarRead,
     expectSidebarUnread,
     expectUnreadSeparator,
@@ -21,9 +20,9 @@ import {
  */
 test('MM-T246 Mark Post as Unread', async ({pw}) => {
     const {adminClient, team, user} = await pw.initSetup();
-    const [author] = await createUsers(pw, adminClient, team, 1, 'unread-author');
-    const channelA = await pw.createPublicChannel(adminClient, team.id, 'Unread A');
-    const channelB = await pw.createPublicChannel(adminClient, team.id, 'Unread B');
+    const [author] = await adminClient.createUsers(team.id, 1, 'unread-author');
+    const channelA = await adminClient.createPublicChannel(team.id, 'Unread A');
+    const channelB = await adminClient.createPublicChannel(team.id, 'Unread B');
     await adminClient.addToChannel(user.id, channelA.id);
     await adminClient.addToChannel(user.id, channelB.id);
     await adminClient.addToChannel(author.id, channelA.id);
@@ -59,7 +58,7 @@ test('MM-T246 Mark Post as Unread', async ({pw}) => {
  */
 test('MM-T248 Mark Direct Message post as Unread', async ({pw}) => {
     const {adminClient, team, user} = await pw.initSetup();
-    const [otherUser] = await createUsers(pw, adminClient, team, 1, 'dm-unread');
+    const [otherUser] = await adminClient.createUsers(team.id, 1, 'dm-unread');
     const dmChannel = await adminClient.createDirectChannel([user.id, otherUser.id]);
     const unreadPost = await createPost(adminClient, otherUser, dmChannel, 'Unread from here');
     await createPost(adminClient, otherUser, dmChannel, 'Unread after here');
@@ -91,9 +90,9 @@ test('MM-T248 Mark Direct Message post as Unread', async ({pw}) => {
  */
 test('MM-T250 Mark as unread in the RHS', async ({pw}) => {
     const {adminClient, team, user} = await pw.initSetup();
-    const [author] = await createUsers(pw, adminClient, team, 1, 'rhs-unread');
-    const channelA = await pw.createPublicChannel(adminClient, team.id, 'RHS Unread A');
-    const channelB = await pw.createPublicChannel(adminClient, team.id, 'RHS Unread B');
+    const [author] = await adminClient.createUsers(team.id, 1, 'rhs-unread');
+    const channelA = await adminClient.createPublicChannel(team.id, 'RHS Unread A');
+    const channelB = await adminClient.createPublicChannel(team.id, 'RHS Unread B');
     await adminClient.addToChannel(user.id, channelA.id);
     await adminClient.addToChannel(user.id, channelB.id);
     await adminClient.addToChannel(author.id, channelA.id);
