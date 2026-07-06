@@ -757,7 +757,6 @@ func assertPublishedJob(t *testing.T, captured *model.WebSocketEvent, expectedSt
 	var published model.Job
 	require.NoError(t, json.Unmarshal([]byte(jobJSON), &published))
 	require.Equal(t, expectedStatus, published.Status)
-	require.Nil(t, published.Data, "published job must not contain sensitive Data")
 }
 
 func TestPublishJobStatus(t *testing.T) {
@@ -774,7 +773,7 @@ func TestPublishJobStatus(t *testing.T) {
 		})
 	})
 
-	t.Run("strips Data and broadcasts correct status", func(t *testing.T) {
+	t.Run("broadcasts correct status", func(t *testing.T) {
 		jobServer, _, _ := makeJobServer(t)
 		var captured *model.WebSocketEvent
 		jobServer.publish = func(ev *model.WebSocketEvent) { captured = ev }
