@@ -5,8 +5,11 @@ import {expect, test} from '@mattermost/playwright-lib';
 
 /**
  * @objective Verify keyboard shortcuts modal opens from Ctrl/Cmd+/ and /shortcuts and can be closed.
+ * @rfqa_no 17
+ * @rfqa_id MM-T1239
+ * @rfqa_title CTRL+/ and CMD+/ and /shortcuts
  */
-test('MM-T1239 CTRL/CMD+/ and /shortcuts open keyboard shortcuts', {tag: '@rfqa'}, async ({pw}) => {
+test('MM-T1239 CTRL/CMD+/ and /shortcuts open keyboard shortcuts', async ({pw}) => {
     const {user, team} = await pw.initSetup();
 
     // # Open the keyboard shortcuts modal with the shortcut
@@ -31,8 +34,11 @@ test('MM-T1239 CTRL/CMD+/ and /shortcuts open keyboard shortcuts', {tag: '@rfqa'
 
 /**
  * @objective Verify Ctrl/Cmd+K channel switch keeps focus so typed characters are not lost.
+ * @rfqa_no 18
+ * @rfqa_id MM-T1242
+ * @rfqa_title CTRL/CMD+K - Typed characters are not lost after switching channels
  */
-test('MM-T1242 CTRL/CMD+K typed characters are not lost after switching channels', {tag: '@rfqa'}, async ({pw}) => {
+test('MM-T1242 CTRL/CMD+K typed characters are not lost after switching channels', async ({pw}) => {
     const {user, team} = await pw.initSetup();
     const message = 'Hello World!';
 
@@ -55,8 +61,11 @@ test('MM-T1242 CTRL/CMD+K typed characters are not lost after switching channels
 
 /**
  * @objective Verify Ctrl/Cmd+Up and Ctrl/Cmd+Down cycle through previous messages in the post textbox.
+ * @rfqa_no 19
+ * @rfqa_id MM-T1254
+ * @rfqa_title CTRL/CMD+UP; CTRL/CMD+DOWN
  */
-test('MM-T1254 CTRL/CMD+UP and CTRL/CMD+DOWN cycle previous messages', {tag: '@rfqa'}, async ({pw}) => {
+test('MM-T1254 CTRL/CMD+UP and CTRL/CMD+DOWN cycle previous messages', async ({pw}) => {
     const {user, team} = await pw.initSetup();
     const messages = ['post 1', 'post 2', 'post 3', 'post 4', 'post 5'];
 
@@ -84,8 +93,11 @@ test('MM-T1254 CTRL/CMD+UP and CTRL/CMD+DOWN cycle previous messages', {tag: '@r
 
 /**
  * @objective Verify Up arrow opens inline edit for the previous message and saving marks the post as edited.
+ * @rfqa_no 20
+ * @rfqa_id MM-T1260
+ * @rfqa_title UP arrow
  */
-test('MM-T1260 UP arrow edits the previous post', {tag: '@rfqa'}, async ({pw}) => {
+test('MM-T1260 UP arrow edits the previous post', async ({pw}) => {
     const {user, team} = await pw.initSetup();
 
     // # Post a message and press Up from the center textbox

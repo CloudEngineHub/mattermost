@@ -61,38 +61,14 @@ export async function createPost(
     } as Post);
 }
 
-export async function openPostDotMenu(channelsPage: ChannelsPage, postId: string, rhs = false) {
+export async function markPostAsUnread(channelsPage: ChannelsPage, postId: string, rhs = false) {
     const post = rhs
         ? await channelsPage.sidebarRight.getPostById(postId)
         : await channelsPage.centerView.getPostById(postId);
 
     await post.toBeVisible();
     await post.container.scrollIntoViewIfNeeded();
-    await expect(async () => {
-        await channelsPage.page.keyboard.press('Escape');
-        await post.hover();
-        await post.postMenu.toBeVisible();
-        await post.postMenu.openDotMenu();
-        await expect(channelsPage.page.getByRole('menuitem', {name: /Mark as Unread/i})).toBeVisible();
-    }).toPass();
-
-    return post;
-}
-
-export async function markPostAsUnreadFromMenu(channelsPage: ChannelsPage, postId: string, rhs = false) {
-    const post = rhs
-        ? await channelsPage.sidebarRight.getPostById(postId)
-        : await channelsPage.centerView.getPostById(postId);
-
-    await post.toBeVisible();
-    await post.container.scrollIntoViewIfNeeded();
-    await expect(async () => {
-        await channelsPage.page.keyboard.press('Escape');
-        await post.hover();
-        await post.postMenu.toBeVisible();
-        await post.postMenu.openDotMenu();
-        await channelsPage.page.getByRole('menuitem', {name: /Mark as Unread/i}).click();
-    }).toPass();
+    await post.container.click({modifiers: ['Alt']});
 }
 
 export async function expectUnreadSeparator(channelsPage: ChannelsPage, message: string) {

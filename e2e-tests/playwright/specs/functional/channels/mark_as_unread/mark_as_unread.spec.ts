@@ -11,13 +11,16 @@ import {
     expectSidebarUnread,
     expectUnreadSeparator,
     goToSidebarItem,
-    markPostAsUnreadFromMenu,
-} from '../rfqa_helpers';
+    markPostAsUnread,
+} from '../migration_helpers';
 
 /**
  * @objective Verify a public channel post can be marked unread from the post menu.
+ * @rfqa_no 5
+ * @rfqa_id MM-T246
+ * @rfqa_title Mark Post as Unread
  */
-test('MM-T246 Mark Post as Unread', {tag: '@rfqa'}, async ({pw}) => {
+test('MM-T246 Mark Post as Unread', async ({pw}) => {
     const {adminClient, team, user} = await pw.initSetup();
     const [author] = await createUsers(pw, adminClient, team, 1, 'rfqa-unread-author');
     const channelA = await createPublicChannel(pw, adminClient, team, 'RFQA Unread A');
@@ -32,7 +35,7 @@ test('MM-T246 Mark Post as Unread', {tag: '@rfqa'}, async ({pw}) => {
     const {channelsPage} = await pw.testBrowser.login(user);
     await channelsPage.goto(team.name, channelA.name);
     await channelsPage.toBeVisible();
-    await markPostAsUnreadFromMenu(channelsPage, unreadPost.id);
+    await markPostAsUnread(channelsPage, unreadPost.id);
 
     // * Verify the unread separator appears at the selected post
     await expectUnreadSeparator(channelsPage, 'hello from current user: 4');
@@ -51,8 +54,11 @@ test('MM-T246 Mark Post as Unread', {tag: '@rfqa'}, async ({pw}) => {
 
 /**
  * @objective Verify a direct-message post can be marked unread and clears when revisited.
+ * @rfqa_no 6
+ * @rfqa_id MM-T248
+ * @rfqa_title Mark Direct Message post as Unread
  */
-test('MM-T248 Mark Direct Message post as Unread', {tag: '@rfqa'}, async ({pw}) => {
+test('MM-T248 Mark Direct Message post as Unread', async ({pw}) => {
     const {adminClient, team, user} = await pw.initSetup();
     const [otherUser] = await createUsers(pw, adminClient, team, 1, 'rfqa-dm-unread');
     const dmChannel = await adminClient.createDirectChannel([user.id, otherUser.id]);
@@ -63,7 +69,7 @@ test('MM-T248 Mark Direct Message post as Unread', {tag: '@rfqa'}, async ({pw}) 
     const {channelsPage} = await pw.testBrowser.login(user);
     await channelsPage.goto(team.name, `@${otherUser.username}`);
     await channelsPage.toBeVisible();
-    await markPostAsUnreadFromMenu(channelsPage, unreadPost.id);
+    await markPostAsUnread(channelsPage, unreadPost.id);
 
     // * Verify unread state appears for the DM
     await expectUnreadSeparator(channelsPage, 'Unread from here');
@@ -80,8 +86,11 @@ test('MM-T248 Mark Direct Message post as Unread', {tag: '@rfqa'}, async ({pw}) 
 
 /**
  * @objective Verify a thread post can be marked unread from the RHS.
+ * @rfqa_no 7
+ * @rfqa_id MM-T250
+ * @rfqa_title Mark as unread in the RHS
  */
-test('MM-T250 Mark as unread in the RHS', {tag: '@rfqa'}, async ({pw}) => {
+test('MM-T250 Mark as unread in the RHS', async ({pw}) => {
     const {adminClient, team, user} = await pw.initSetup();
     const [author] = await createUsers(pw, adminClient, team, 1, 'rfqa-rhs-unread');
     const channelA = await createPublicChannel(pw, adminClient, team, 'RFQA RHS Unread A');
@@ -97,7 +106,7 @@ test('MM-T250 Mark as unread in the RHS', {tag: '@rfqa'}, async ({pw}) => {
     await channelsPage.goto(team.name, channelA.name);
     await channelsPage.toBeVisible();
     await (await channelsPage.centerView.getPostById(root.id)).reply();
-    await markPostAsUnreadFromMenu(channelsPage, root.id, true);
+    await markPostAsUnread(channelsPage, root.id, true);
 
     // * Verify both the center channel and RHS show the unread separator
     await expectUnreadSeparator(channelsPage, 'post1');

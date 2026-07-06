@@ -3,12 +3,15 @@
 
 import {test} from '@mattermost/playwright-lib';
 
-import {createPost, expectNoSearchResult, expectSearchResult, submitSearch} from '../rfqa_helpers';
+import {createPost, expectNoSearchResult, expectSearchResult, submitSearch} from '../migration_helpers';
 
 /**
  * @objective Verify message search displays matching results in the right-hand side.
+ * @rfqa_no 8
+ * @rfqa_id MM-T350
+ * @rfqa_title Searching displays results in RHS
  */
-test('MM-T350 Searching displays results in the RHS', {tag: '@rfqa'}, async ({pw}) => {
+test('MM-T350 Searching displays results in the RHS', async ({pw}) => {
     const {adminClient, team, user} = await pw.initSetup();
     const channel = await adminClient.getChannelByName(team.id, 'off-topic');
     const message = `Basic word search: Hello world! #hello ${pw.random.id()}`;
@@ -27,8 +30,11 @@ test('MM-T350 Searching displays results in the RHS', {tag: '@rfqa'}, async ({pw
 
 /**
  * @objective Verify changing timezone changes which posts match an on: date filter.
+ * @rfqa_no 9
+ * @rfqa_id MM-T595
+ * @rfqa_title Changing timezone changes day search results appears
  */
-test('MM-T595 Changing timezone changes day search results appears', {tag: '@rfqa'}, async ({pw}) => {
+test('MM-T595 Changing timezone changes day search results appears', async ({pw}) => {
     const {adminClient, team, user} = await pw.initSetup();
     const channel = await adminClient.getChannelByName(team.id, 'off-topic');
     const identifier = `timezone-${pw.random.id()}`;
@@ -63,8 +69,11 @@ test('MM-T595 Changing timezone changes day search results appears', {tag: '@rfq
 
 /**
  * @objective Verify editing a date-filtered search query updates the search results.
+ * @rfqa_no 10
+ * @rfqa_id MM-T599
+ * @rfqa_title Edit date and search again
  */
-test('MM-T599 Edit date and search again', {tag: '@rfqa'}, async ({pw}) => {
+test('MM-T599 Edit date and search again', async ({pw}) => {
     const {adminClient, team, user} = await pw.initSetup();
     const channel = await adminClient.getChannelByName(team.id, 'off-topic');
     const targetMessage = `calendarUpdate-${pw.random.id()}`;

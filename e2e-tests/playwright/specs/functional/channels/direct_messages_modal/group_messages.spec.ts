@@ -3,12 +3,15 @@
 
 import {expect, test} from '@mattermost/playwright-lib';
 
-import {createPost, createUsers, openDirectMessagesModal, selectUsersForDirectMessage} from '../rfqa_helpers';
+import {createPost, createUsers, openDirectMessagesModal, selectUsersForDirectMessage} from '../migration_helpers';
 
 /**
  * @objective Verify users can be added and removed while creating a group message.
+ * @rfqa_no 11
+ * @rfqa_id MM-T460
+ * @rfqa_title Add and Remove users whilst creating a group message
  */
-test('MM-T460 Add and remove users while creating new Group Message', {tag: '@rfqa'}, async ({pw}) => {
+test('MM-T460 Add and remove users while creating new Group Message', async ({pw}) => {
     const {adminClient, team, user} = await pw.initSetup();
     const participants = await createUsers(pw, adminClient, team, 3, 'rfqa-gm-edit');
 
@@ -35,8 +38,11 @@ test('MM-T460 Add and remove users while creating new Group Message', {tag: '@rf
 
 /**
  * @objective Verify the group message intro, sidebar label, and member count render for participants.
+ * @rfqa_no 12
+ * @rfqa_id MM-T465
+ * @rfqa_title Assert that group message participant sees
  */
-test('MM-T465 Create a group message and show participant details', {tag: '@rfqa'}, async ({pw}) => {
+test('MM-T465 Create a group message and show participant details', async ({pw}) => {
     const {adminClient, team, user} = await pw.initSetup();
     const participants = await createUsers(pw, adminClient, team, 2, 'rfqa-gm-intro');
 
@@ -64,8 +70,11 @@ test('MM-T465 Create a group message and show participant details', {tag: '@rfqa
 
 /**
  * @objective Verify a mention posted in a group message creates an unread mention for the mentioned participant.
+ * @rfqa_no 13
+ * @rfqa_id MM-T469
+ * @rfqa_title Post an @mention on a group channel
  */
-test('MM-T469 Create a group message and post a mention for another user', {tag: '@rfqa'}, async ({pw}) => {
+test('MM-T469 Create a group message and post a mention for another user', async ({pw}) => {
     const {adminClient, team, user} = await pw.initSetup();
     const [sender, secondParticipant] = await createUsers(pw, adminClient, team, 2, 'rfqa-gm-mention');
     const gmChannel = await adminClient.createGroupChannel([user.id, sender.id, secondParticipant.id]);
@@ -85,8 +94,11 @@ test('MM-T469 Create a group message and post a mention for another user', {tag:
 
 /**
  * @objective Verify muting a group message suppresses normal unread notification styling but keeps mention counts.
+ * @rfqa_no 14
+ * @rfqa_id MM-T475
+ * @rfqa_title Channel preferences, mute channel
  */
-test('MM-T475 Group Message Channel Preferences Mute channel', {tag: '@rfqa'}, async ({pw}) => {
+test('MM-T475 Group Message Channel Preferences Mute channel', async ({pw}) => {
     const {adminClient, team, user} = await pw.initSetup();
     const [sender, secondParticipant] = await createUsers(pw, adminClient, team, 2, 'rfqa-gm-mute');
     const gmChannel = await adminClient.createGroupChannel([user.id, sender.id, secondParticipant.id]);
@@ -112,33 +124,32 @@ test('MM-T475 Group Message Channel Preferences Mute channel', {tag: '@rfqa'}, a
 
 /**
  * @objective Verify a closed group message can be reopened from the Direct Messages modal.
+ * @rfqa_no 15
+ * @rfqa_id MM-T478
+ * @rfqa_title Open existing group message from More... section
  */
-test(
-    'MM-T478 Closing group message channels and re-opening via Direct Messages modal',
-    {tag: '@rfqa'},
-    async ({pw}) => {
-        const {adminClient, team, user} = await pw.initSetup();
-        const participants = await createUsers(pw, adminClient, team, 2, 'rfqa-gm-reopen');
-        const gmChannel = await adminClient.createGroupChannel([user.id, participants[0].id, participants[1].id]);
+test('MM-T478 Closing group message channels and re-opening via Direct Messages modal', async ({pw}) => {
+    const {adminClient, team, user} = await pw.initSetup();
+    const participants = await createUsers(pw, adminClient, team, 2, 'rfqa-gm-reopen');
+    const gmChannel = await adminClient.createGroupChannel([user.id, participants[0].id, participants[1].id]);
 
-        // # Open then close the group message conversation
-        const {channelsPage, page} = await pw.testBrowser.login(user);
-        await channelsPage.gotoMessage(team.name, gmChannel.name);
-        await channelsPage.toBeVisible();
-        await channelsPage.centerView.header.openChannelMenu();
-        await page.getByRole('menuitem', {name: 'Close Group Message'}).click();
-        await expect(
-            channelsPage.sidebarLeft.container.locator('.SidebarLink').filter({hasText: participants[0].username}),
-        ).toHaveCount(0);
+    // # Open then close the group message conversation
+    const {channelsPage, page} = await pw.testBrowser.login(user);
+    await channelsPage.gotoMessage(team.name, gmChannel.name);
+    await channelsPage.toBeVisible();
+    await channelsPage.centerView.header.openChannelMenu();
+    await page.getByRole('menuitem', {name: 'Close Group Message'}).click();
+    await expect(
+        channelsPage.sidebarLeft.container.locator('.SidebarLink').filter({hasText: participants[0].username}),
+    ).toHaveCount(0);
 
-        // # Reopen the same GM from the Direct Messages modal
-        const modal = await openDirectMessagesModal(channelsPage);
-        await modal.selectUser(participants[0]);
-        await modal.selectUser(participants[1]);
-        await modal.goToChannel();
+    // # Reopen the same GM from the Direct Messages modal
+    const modal = await openDirectMessagesModal(channelsPage);
+    await modal.selectUser(participants[0]);
+    await modal.selectUser(participants[1]);
+    await modal.goToChannel();
 
-        // * Verify the existing group message opens again
-        await expect(page.locator('#channelHeaderTitle')).toContainText(participants[0].username);
-        await expect(page.locator('#channelHeaderTitle')).toContainText(participants[1].username);
-    },
-);
+    // * Verify the existing group message opens again
+    await expect(page.locator('#channelHeaderTitle')).toContainText(participants[0].username);
+    await expect(page.locator('#channelHeaderTitle')).toContainText(participants[1].username);
+});

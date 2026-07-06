@@ -46,7 +46,7 @@ To run the migrated Rainforest (RFQA) browser tests through Docker against the e
 cd e2e-tests
 SERVER_IMAGE="mattermostdevelopment/mattermost-enterprise-edition:master" \
 TEST=playwright \
-TEST_FILTER="--grep @rfqa --project=chrome" \
+TEST_FILTER="functional/channels/messaging/messaging.spec.ts functional/channels/mark_as_unread/mark_as_unread.spec.ts functional/channels/search/search.spec.ts functional/channels/direct_messages_modal/group_messages.spec.ts functional/channels/notifications/channel_mentions.spec.ts functional/channels/keyboard_shortcuts/keyboard_shortcuts.spec.ts --project=chrome" \
 make
 ```
 
@@ -76,8 +76,8 @@ npm run test
 # Note: visual tests run in a separate workflow
 npm run test:ci
 
-# Run the migrated Rainforest (RFQA) browser tests only
-npm run test:rfqa
+# Run this migrated Rainforest browser-test batch by file path
+npm run test -- functional/channels/messaging/messaging.spec.ts functional/channels/mark_as_unread/mark_as_unread.spec.ts functional/channels/search/search.spec.ts functional/channels/direct_messages_modal/group_messages.spec.ts functional/channels/notifications/channel_mentions.spec.ts functional/channels/keyboard_shortcuts/keyboard_shortcuts.spec.ts --project=chrome
 ```
 
 #### 3. Inspect test results at `/results/output` folder when something fails unexpectedly.
