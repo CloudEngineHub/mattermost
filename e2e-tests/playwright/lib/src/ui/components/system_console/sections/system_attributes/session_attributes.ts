@@ -80,33 +80,67 @@ export default class SessionAttributes {
         return this.row(fieldId).getByTestId(`session-attribute-dotmenu-${fieldId}`);
     }
 
+    dotMenu(fieldId: string): Locator {
+        return this.page.locator(`#session-attribute-dotmenu-${fieldId}-menu`);
+    }
+
     // ── Row actions (stage edits locally; commit via saveAndWaitForSettled) ──
 
     async openDotMenu(fieldId: string) {
         await this.dotMenuButton(fieldId).click();
+
+        // Wait for the popover to actually open. Opening a second dot menu right
+        // after the previous one closed can otherwise race the closing overlay,
+        // where the click lands on the fading backdrop instead of the button.
+        await expect(this.dotMenu(fieldId)).toBeVisible();
     }
 
     /**
-     * Stage a TTL preset (in seconds) for a field via its dot menu. The submenu
-     * stays open until a preset is chosen; the option closes the menu on click.
+     * Stage a TTL preset (in seconds) for a field via its dot menu.
      */
     async setTtlPreset(fieldId: string, seconds: number) {
-        await this.openDotMenu(fieldId);
-        await this.page.getByRole('menuitem', {name: /Time-to-live/}).hover();
-        const option = this.page.getByTestId(`session-attribute-ttl-option-${fieldId}-${seconds}`);
-        await expect(option).toBeAttached();
-        await option.click({force: true});
+        await this.chooseDurationPreset(fieldId, 'ttl', /Time-to-live/, seconds);
     }
 
     /**
      * Stage a grace-period preset (in seconds) for a field via its dot menu.
      */
     async setGracePreset(fieldId: string, seconds: number) {
-        await this.openDotMenu(fieldId);
-        await this.page.getByRole('menuitem', {name: /Grace Period/}).hover();
-        const option = this.page.getByTestId(`session-attribute-grace-option-${fieldId}-${seconds}`);
-        await expect(option).toBeAttached();
-        await option.click({force: true});
+        await this.chooseDurationPreset(fieldId, 'grace', /Grace Period/, seconds);
+    }
+
+    /**
+     * Open a duration submenu and pick a preset.
+     *
+     * The submenu opens on hover and collapses on the trigger's mouse-leave, so
+     * driving it with the pointer is racy: the popover closes while Playwright
+     * travels to the option. Instead the submenu is opened with the keyboard
+     * (the trigger opens it on ArrowRight) so the pointer never has to leave.
+     *
+     * The whole open sequence is retried via toPass because the menu's mount/
+     * unmount transitions can transiently swallow a click or drop focus; each
+     * attempt first presses Escape to return to a known-closed state so a retry
+     * never stacks a second popover on top of a half-open one.
+     */
+    private async chooseDurationPreset(fieldId: string, kind: 'ttl' | 'grace', triggerName: RegExp, seconds: number) {
+        const trigger = this.page.getByRole('menuitem', {name: triggerName});
+        const option = this.page.getByTestId(`session-attribute-${kind}-option-${fieldId}-${seconds}`);
+
+        await expect(async () => {
+            await this.page.keyboard.press('Escape');
+            await expect(this.dotMenu(fieldId)).toBeHidden({timeout: 2000});
+
+            await this.dotMenuButton(fieldId).click();
+            await expect(trigger).toBeVisible({timeout: 2000});
+            await trigger.press('ArrowRight');
+            await expect(option).toBeVisible({timeout: 2000});
+        }).toPass({timeout: 20000, intervals: [250, 500, 1000]});
+
+        await option.click();
+
+        // Selecting a preset closes the whole menu (forceCloseOnSelect). Wait
+        // for it to fully unmount so a follow-up openDotMenu starts clean.
+        await expect(this.dotMenu(fieldId)).toBeHidden();
     }
 
     /**
