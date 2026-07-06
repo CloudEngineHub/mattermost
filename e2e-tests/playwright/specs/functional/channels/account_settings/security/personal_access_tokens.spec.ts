@@ -256,6 +256,39 @@ test.describe('Personal Access Tokens expiry @personal_access_tokens', () => {
         expect(rotated.id).toBe(originalToken.id);
     });
 
+    test('lets the user pick a new expiry when regenerating', async ({pw}) => {
+        test.setTimeout(120000);
+        const {user, adminClient} = await pw.initSetup();
+        await adminClient.patchConfig({ServiceSettings: {EnableUserAccessTokens: true}});
+        await adminClient.updateUserRoles(user.id, TOKEN_ROLES);
+        await pw.waitUntil(async () => {
+            const cfg = await adminClient.getConfig();
+            return cfg.ServiceSettings?.EnableUserAccessTokens === true;
+        });
+
+        // # Seed a never-expiring token for the user
+        const originalToken = await adminClient.createUserAccessToken(user.id, 'expiring rotate token');
+        expect(originalToken.expires_at).toBe(0);
+
+        const {channelsPage} = await pw.testBrowser.login(user);
+        await channelsPage.goto();
+        await channelsPage.toBeVisible();
+
+        const modal = await openTokensSection(channelsPage.page);
+        const tokenRow = modal.locator('.setting-box__item', {hasText: 'expiring rotate token'});
+
+        // # Regenerate, choosing a 7-day expiry instead of the "no expiry" default
+        await tokenRow.getByRole('link', {name: 'Regenerate'}).click();
+        const confirmModal = channelsPage.page.locator('#confirmModal');
+        await confirmModal.locator('#regenerateTokenExpiry').selectOption('7d');
+        await confirmModal.getByRole('button', {name: 'Yes, Regenerate'}).click();
+
+        // * The rotated token now has a future expiry set
+        await expect(modal.getByText('Access Token:')).toBeVisible();
+        const rotated = await adminClient.getUserAccessToken(originalToken.id);
+        expect(rotated.expires_at).toBeGreaterThan(Date.now());
+    });
+
     test('does not offer to regenerate a disabled token', async ({pw}) => {
         test.setTimeout(120000);
         const {user, adminClient} = await pw.initSetup();

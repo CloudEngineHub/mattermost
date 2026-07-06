@@ -375,7 +375,35 @@ describe('UserAccessTokenSection component', () => {
 
             expect(setRequireConfirm).toHaveBeenCalledWith(true, expect.any(Function));
             expect(await screen.findByText(/new-secret/)).toBeInTheDocument();
-            expect(rotateUserAccessToken).toHaveBeenCalledWith('t1');
+            expect(rotateUserAccessToken).toHaveBeenCalledWith('t1', undefined);
+        });
+
+        test('lets the user pick a new expiry before regenerating', async () => {
+            const rotateUserAccessToken = jest.fn().mockResolvedValue({data: {id: 't1', description: 'my token', is_active: true, token: 'new-secret'}});
+            renderSection({
+                userAccessTokens: {t1: {id: 't1', description: 'my token', is_active: true}},
+                actions: {...getBaseProps().actions, rotateUserAccessToken},
+            });
+
+            fireEvent.click(screen.getByText('Regenerate'));
+            change(document.body, '#regenerateTokenExpiry', '7d');
+            fireEvent.click(screen.getByText('Yes, Regenerate'));
+
+            await screen.findByText(/new-secret/);
+            expect(rotateUserAccessToken).toHaveBeenCalledWith('t1', endOfLocalDayPlusDays(7));
+        });
+
+        test('disables the confirm button until a required custom expiry date is chosen', () => {
+            renderSection({
+                maxLifetimeDays: 30,
+                userAccessTokens: {t1: {id: 't1', description: 'my token', is_active: true}},
+            });
+
+            fireEvent.click(screen.getByText('Regenerate'));
+            change(document.body, '#regenerateTokenExpiry', 'custom');
+            change(document.body, '#regenerateTokenExpiryCustom', '');
+
+            expect(screen.getByText('Yes, Regenerate').closest('button')).toBeDisabled();
         });
 
         test('shows the server error message when rotation fails', async () => {
