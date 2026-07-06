@@ -240,9 +240,10 @@ test.describe('Personal Access Tokens expiry @personal_access_tokens', () => {
 
         // # Click Regenerate and confirm the warning naming the token
         await tokenRow.getByRole('link', {name: 'Regenerate'}).click();
-        await expect(modal.getByText('Regenerate Token?')).toBeVisible();
-        await expect(modal.getByText(/rotate me token/)).toBeVisible();
-        await modal.getByRole('button', {name: 'Yes, Regenerate'}).click();
+        const confirmModal = channelsPage.page.locator('#confirmModal');
+        await expect(confirmModal.getByText('Regenerate Token?')).toBeVisible();
+        await expect(confirmModal.getByText(/rotate me token/)).toBeVisible();
+        await confirmModal.getByRole('button', {name: 'Yes, Regenerate'}).click();
 
         // * The new secret is revealed, the token keeps its id, and the old row is hidden
         await expect(modal.getByText('Access Token:')).toBeVisible();
