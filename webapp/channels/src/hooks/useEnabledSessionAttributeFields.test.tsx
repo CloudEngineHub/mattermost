@@ -15,7 +15,7 @@ jest.mock('mattermost-redux/actions/properties', () => ({
 
 const mockFetchPropertyFields = fetchPropertyFields as jest.MockedFunction<typeof fetchPropertyFields>;
 
-const SESSION_GROUP_UUID = 'nkpkzni6yjrjt8uktpbwkagoth';
+const SESSION_GROUP_UUID = 'session_attributes';
 
 const makeField = (id: string, name: string, enabled: boolean): UserPropertyField => ({
     id,

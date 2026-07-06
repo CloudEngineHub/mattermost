@@ -28,7 +28,7 @@ function makeField(name: string, type: 'text' | 'select', extra: ExtraAttrs = {}
         id: `field-${name}`,
         name,
         type,
-        group_id: 'nkpkzni6yjrjt8uktpbwkagoth',
+        group_id: 'session_attributes',
         create_at: 1736541716295,
         update_at: 0,
         delete_at: 0,

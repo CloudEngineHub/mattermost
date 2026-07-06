@@ -433,8 +433,8 @@ describe('hasUsableAttributes', () => {
 describe('excludeSessionAttributes', () => {
     // Group ids are real UUIDs in production; session attributes are identified
     // by their `session` object type, not by the group id matching a name.
-    const CPA_GROUP_UUID = 'cpa9q4w7m2x5c8v1b6n3k0jr5h';
-    const SESSION_GROUP_UUID = 'nkpkzni6yjrjt8uktpbwkagoth';
+    const CPA_GROUP_UUID = 'custom_profile_attributes';
+    const SESSION_GROUP_UUID = 'session_attributes';
 
     const makeField = (id: string, objectType: string): UserPropertyField => ({
         id,
@@ -501,8 +501,8 @@ describe('celPrefixForField', () => {
 });
 
 describe('mergeSessionAttributes', () => {
-    const CPA_GROUP_UUID = '6t9dj3c7bpdx8cercb9m9u6nre';
-    const SESSION_GROUP_UUID = 'nkpkzni6yjrjt8uktpbwkagoth';
+    const CPA_GROUP_UUID = 'custom_profile_attributes';
+    const SESSION_GROUP_UUID = 'session_attributes';
 
     const makeField = (id: string, objectType: string, name = id): UserPropertyField => ({
         id,

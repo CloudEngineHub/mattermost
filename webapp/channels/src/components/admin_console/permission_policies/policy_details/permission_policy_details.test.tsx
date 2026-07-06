@@ -49,7 +49,7 @@ const mockUseEnabledSessionAttributeFields = useEnabledSessionAttributeFields as
 const MockedTableEditor = TableEditor as jest.MockedFunction<typeof TableEditor>;
 const MockedCELEditor = CELEditor as jest.MockedFunction<typeof CELEditor>;
 
-const SESSION_GROUP_UUID = 'nkpkzni6yjrjt8uktpbwkagoth';
+const SESSION_GROUP_UUID = 'session_attributes';
 
 const makeSessionField = (id: string, name: string): UserPropertyField => ({
     id,
@@ -133,7 +133,7 @@ describe('components/admin_console/permission_policies/policy_details/Permission
         mockGetAccessControlFields.mockResolvedValue({
             data: [
                 {id: 'u1', name: 'teams', attrs: {ldap: true}},
-                {id: 'u2', name: 'department', group_id: 'cpa9q4w7m2x5c8v1b6n3k0jr5h', object_type: 'user', attrs: {managed: 'admin'}},
+                {id: 'u2', name: 'department', group_id: 'custom_profile_attributes', object_type: 'user', attrs: {managed: 'admin'}},
             ],
         });
     });

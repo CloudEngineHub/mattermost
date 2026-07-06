@@ -61,7 +61,7 @@ const mockUseChannelSystemPolicies = useChannelSystemPolicies as jest.MockedFunc
 const mockUseEnabledSessionAttributeFields = useEnabledSessionAttributeFields as jest.MockedFunction<typeof useEnabledSessionAttributeFields>;
 const MockedTableEditor = TableEditor as jest.MockedFunction<typeof TableEditor>;
 
-const SESSION_GROUP_UUID = 'nkpkzni6yjrjt8uktpbwkagoth';
+const SESSION_GROUP_UUID = 'session_attributes';
 
 const makeSessionField = (id: string, name: string): UserPropertyField => ({
     id,
@@ -201,7 +201,7 @@ describe('components/channel_settings_modal/ChannelSettingsPermissionsPolicyTab'
     test('merges the fetched enabled session attributes into the rule editor picker', async () => {
         mockActions.getAccessControlFields.mockResolvedValue({
             data: [
-                {id: 'u1', name: 'department', group_id: 'cpa9q4w7m2x5c8v1b6n3k0jr5h', object_type: 'user', attrs: {managed: 'admin'}},
+                {id: 'u1', name: 'department', group_id: 'custom_profile_attributes', object_type: 'user', attrs: {managed: 'admin'}},
             ],
         });
         mockUseEnabledSessionAttributeFields.mockReturnValue([makeSessionField('s1', 'network_name')]);
@@ -231,7 +231,7 @@ describe('components/channel_settings_modal/ChannelSettingsPermissionsPolicyTab'
     test('shows no session attributes when none are enabled', async () => {
         mockActions.getAccessControlFields.mockResolvedValue({
             data: [
-                {id: 'u1', name: 'department', group_id: 'cpa9q4w7m2x5c8v1b6n3k0jr5h', object_type: 'user', attrs: {managed: 'admin'}},
+                {id: 'u1', name: 'department', group_id: 'custom_profile_attributes', object_type: 'user', attrs: {managed: 'admin'}},
             ],
         });
         mockUseEnabledSessionAttributeFields.mockReturnValue([]);

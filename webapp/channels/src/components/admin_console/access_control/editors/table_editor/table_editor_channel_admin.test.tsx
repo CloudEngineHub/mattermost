@@ -397,7 +397,7 @@ describe('TableEditor - attribute name collision across namespaces', () => {
         id,
         name: 'region',
         type: 'text',
-        group_id: objectType === 'session' ? 'nkpkzni6yjrjt8uktpbwkagoth' : 'custom_profile_attributes',
+        group_id: objectType === 'session' ? 'session_attributes' : 'custom_profile_attributes',
         create_at: 0,
         update_at: 0,
         delete_at: 0,

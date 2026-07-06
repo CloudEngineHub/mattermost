@@ -29,7 +29,7 @@ import type {SearchableStrings} from '../types';
 
 type Props = {
     disabled: boolean;
-}
+};
 
 export default function SessionAttributesPage(props: Props) {
     const dispatch = useDispatch();

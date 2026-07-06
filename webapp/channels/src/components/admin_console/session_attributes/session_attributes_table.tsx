@@ -168,6 +168,7 @@ export default function SessionAttributesTable({data, onStageChange}: Props) {
                 enableSorting: false,
             }),
             columnHelper.display({
+
                 // Not named 'status' because that class name collides with the
                 // global user status indicator styles (see _status-icon.scss),
                 // which add unwanted margin to this column.

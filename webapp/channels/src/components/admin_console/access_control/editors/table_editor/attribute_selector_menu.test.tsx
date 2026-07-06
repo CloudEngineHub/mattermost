@@ -11,8 +11,8 @@ import AttributeSelectorMenu from './attribute_selector_menu';
 
 // Real groups carry UUIDs distinct from their names, and session attributes are
 // identified by their `session` object type rather than the group id.
-const CPA_GROUP_UUID = 'cpa9q4w7m2x5c8v1b6n3k0jr5h';
-const SESSION_GROUP_UUID = 'nkpkzni6yjrjt8uktpbwkagoth';
+const CPA_GROUP_UUID = 'custom_profile_attributes';
+const SESSION_GROUP_UUID = 'session_attributes';
 
 const userField: UserPropertyField = {
     id: 'f1',

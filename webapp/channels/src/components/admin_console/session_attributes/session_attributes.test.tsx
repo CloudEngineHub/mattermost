@@ -28,7 +28,7 @@ type ExtraAttrs = {
 
 // The server keys every field under a real group UUID that differs from the
 // group name; fixtures must mirror that so the resolve-by-name path is exercised.
-const SESSION_GROUP_UUID = 'nkpkzni6yjrjt8uktpbwkagoth';
+const SESSION_GROUP_UUID = 'session_attributes';
 
 function makeField(name: string, type: 'text' | 'select', sortOrder: number, extra: ExtraAttrs = {}): UserPropertyField {
     const {options, ...tunables} = extra;
