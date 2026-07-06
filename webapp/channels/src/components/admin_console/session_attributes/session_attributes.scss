@@ -2,7 +2,10 @@
 // See LICENSE.txt for license information.
 
 .SessionAttributes__content {
-    &&& {
+    // Repeat the class via interpolation to triple specificity and override
+    // the admin console's default content max-width. Dart Sass rejects the
+    // bare `&&&` shorthand, so `&#{&}#{&}` produces the same compound selector.
+    &#{&}#{&} {
         max-width: none;
     }
 }
