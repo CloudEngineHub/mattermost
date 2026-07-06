@@ -2,14 +2,13 @@
 // See LICENSE.txt for license information.
 
 import classNames from 'classnames';
-import React, {useRef, useState} from 'react';
-import {FormattedMessage, defineMessages, useIntl} from 'react-intl';
+import React from 'react';
+import {FormattedMessage, useIntl} from 'react-intl';
 
 import {WithTooltip} from '@mattermost/shared/components/tooltip';
 
+import useCopyText, {messages as copyMessages} from 'components/common/hooks/useCopyText';
 import ExternalLink from 'components/external_link';
-
-import {copyToClipboard} from 'utils/utils';
 
 import './plugin_metadata_panel.scss';
 
@@ -30,38 +29,19 @@ export type PluginMetadataPanelProps = {
     className?: string;
 };
 
-const copyMessages = defineMessages({
-    copied: {
-        id: 'copied.message',
-        defaultMessage: 'Copied',
-    },
-    copyText: {
-        id: 'copy.text.message',
-        defaultMessage: 'Copy text',
-    },
-});
-
 const PluginMetadataId = ({id}: {id: string}) => {
     const intl = useIntl();
-    const [isCopied, setIsCopied] = useState(false);
-    const timerRef = useRef<NodeJS.Timeout | null>(null);
+    const {copiedRecently, onClick: copyId} = useCopyText({
+        text: id,
+        successCopyTimeout: 2000,
+    });
 
-    const copyId = (e: React.MouseEvent | React.KeyboardEvent) => {
+    const tooltipMessage = copiedRecently ? copyMessages.copied : copyMessages.copy;
+
+    const handleCopy = (e: React.MouseEvent | React.KeyboardEvent) => {
         e.preventDefault();
-        setIsCopied(true);
-
-        if (timerRef.current) {
-            clearTimeout(timerRef.current);
-        }
-
-        timerRef.current = setTimeout(() => {
-            setIsCopied(false);
-        }, 2000);
-
-        copyToClipboard(id);
+        copyId();
     };
-
-    const tooltipMessage = isCopied ? copyMessages.copied : copyMessages.copyText;
 
     return (
         <WithTooltip
@@ -70,10 +50,10 @@ const PluginMetadataId = ({id}: {id: string}) => {
             <span
                 className='PluginMetadataPanel__id'
                 data-testid='plugin-metadata-id'
-                onClick={copyId}
+                onClick={handleCopy}
                 onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
-                        copyId(e);
+                        handleCopy(e);
                     }
                 }}
                 role='button'

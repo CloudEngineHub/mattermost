@@ -4208,7 +4208,7 @@ exports[`components/PluginManagement should match snapshot, with installed plugi
                         >
                            (
                           <span
-                            aria-label="Copy text"
+                            aria-label="Copy"
                             class="PluginMetadataPanel__id"
                             data-testid="plugin-metadata-id"
                             role="button"
@@ -4334,7 +4334,7 @@ exports[`components/PluginManagement should match snapshot, with installed plugi
                         >
                            (
                           <span
-                            aria-label="Copy text"
+                            aria-label="Copy"
                             class="PluginMetadataPanel__id"
                             data-testid="plugin-metadata-id"
                             role="button"
@@ -4904,7 +4904,7 @@ exports[`components/PluginManagement should match snapshot, with installed plugi
                         >
                            (
                           <span
-                            aria-label="Copy text"
+                            aria-label="Copy"
                             class="PluginMetadataPanel__id"
                             data-testid="plugin-metadata-id"
                             role="button"
@@ -5398,7 +5398,7 @@ exports[`components/PluginManagement should match snapshot, with installed plugi
                         >
                            (
                           <span
-                            aria-label="Copy text"
+                            aria-label="Copy"
                             class="PluginMetadataPanel__id"
                             data-testid="plugin-metadata-id"
                             role="button"
@@ -5892,7 +5892,7 @@ exports[`components/PluginManagement should match snapshot, with installed plugi
                         >
                            (
                           <span
-                            aria-label="Copy text"
+                            aria-label="Copy"
                             class="PluginMetadataPanel__id"
                             data-testid="plugin-metadata-id"
                             role="button"
@@ -6386,7 +6386,7 @@ exports[`components/PluginManagement should match snapshot, with installed plugi
                         >
                            (
                           <span
-                            aria-label="Copy text"
+                            aria-label="Copy"
                             class="PluginMetadataPanel__id"
                             data-testid="plugin-metadata-id"
                             role="button"
@@ -6504,7 +6504,7 @@ exports[`components/PluginManagement should match snapshot, with installed plugi
                         >
                            (
                           <span
-                            aria-label="Copy text"
+                            aria-label="Copy"
                             class="PluginMetadataPanel__id"
                             data-testid="plugin-metadata-id"
                             role="button"
