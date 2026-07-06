@@ -21,11 +21,12 @@ test('MM-T350 Searching displays results in the RHS', async ({pw}) => {
     const {channelsPage} = await pw.testBrowser.login(user);
     await channelsPage.goto(team.name, channel.name);
     await channelsPage.toBeVisible();
-    await submitSearch(channelsPage, `hello ${message.split(' ').pop()}`);
+    const query = `hello ${message.split(' ').pop()}`;
+    await submitSearch(channelsPage, query);
 
     // * Verify the matching result appears in the RHS
-    await expectSearchResult(channelsPage, 'Hello world');
-    await expectSearchResult(channelsPage, '#hello');
+    await expectSearchResult(channelsPage, 'Hello world', query);
+    await expectSearchResult(channelsPage, '#hello', query);
 });
 
 /**
@@ -50,10 +51,11 @@ test('MM-T595 Changing timezone changes day search results appears', async ({pw}
     const {channelsPage} = await pw.testBrowser.login(user);
     await channelsPage.goto(team.name, channel.name);
     await channelsPage.toBeVisible();
-    await submitSearch(channelsPage, `on:2018-10-31 ${identifier}`);
+    const utcQuery = `on:2018-10-31 ${identifier}`;
+    await submitSearch(channelsPage, utcQuery);
 
     // * Verify the result appears for the UTC date
-    await expectSearchResult(channelsPage, targetMessage);
+    await expectSearchResult(channelsPage, targetMessage, utcQuery);
 
     // # Change timezone and run the same date-filtered search
     await adminClient.patchUser({
@@ -61,7 +63,7 @@ test('MM-T595 Changing timezone changes day search results appears', async ({pw}
         timezone: {automaticTimezone: '', manualTimezone: 'Europe/Brussels', useAutomaticTimezone: 'false'},
     });
     await channelsPage.page.reload();
-    await submitSearch(channelsPage, `on:2018-10-31 ${identifier}`);
+    await submitSearch(channelsPage, utcQuery);
 
     // * Verify the post no longer matches the previous day in the new timezone
     await expectNoSearchResult(channelsPage, targetMessage);
@@ -84,10 +86,11 @@ test('MM-T599 Edit date and search again', async ({pw}) => {
     const {channelsPage} = await pw.testBrowser.login(user);
     await channelsPage.goto(team.name, channel.name);
     await channelsPage.toBeVisible();
-    await submitSearch(channelsPage, `on:2019-01-15 ${targetMessage}`);
+    const originalDateQuery = `on:2019-01-15 ${targetMessage}`;
+    await submitSearch(channelsPage, originalDateQuery);
 
     // * Verify the matching post appears for the original date
-    await expectSearchResult(channelsPage, targetMessage);
+    await expectSearchResult(channelsPage, targetMessage, originalDateQuery);
 
     // # Edit the date and run the search again
     await submitSearch(channelsPage, `on:2019-01-16 ${targetMessage}`);
